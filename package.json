@@ -1,0 +1,23 @@
+{
+  "name": "brain-test-characters",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/changty/brain-test-characters.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/changty/brain-test-characters/issues"
+  },
+  "homepage": "https://github.com/changty/brain-test-characters#readme",
+  "dependencies": {
+    "brain": "^0.7.0",
+    "canvas": "^1.6.2"
+  }
+}

@@ -179,7 +179,7 @@ $(document).ready(function(e) {
 
         var data = new ImageParser(this, {debug: false});
         console.log(data);
-        console.log(run(data));
+        console.log(run(data[0]));
 
     });
   }

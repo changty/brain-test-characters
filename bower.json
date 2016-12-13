@@ -1,0 +1,21 @@
+{
+  "name": "brain-test-characters",
+  "description": "",
+  "main": "index.js",
+  "authors": [
+    "Einari Kurvinen <einari.kurvinen@gmail.com>"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/changty/brain-test-characters",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^3.1.1"
+  }
+}

@@ -170,105 +170,140 @@ ImageParser.prototype.formatForBrain = function FormatForBrain(imgData){
 }
 
 
-const inputFolder = './imgs/';
-var fileCount = 0; 
-var trainingData = [];
-fs.readdir(inputFolder, (err, files) => {
-	if(err) throw err; 
-
-	// count jpgs 
-	for(var i=0; i<files.length; i++) {
-		if(files[i].indexOf('.jpg') !== -1) {
-			fileCount++;
-		}
-	}
-	
-	files.forEach(file => {
-		// console.log(file);
-		fs.readFile(inputFolder + file, function(err, data) {
-			if(file.indexOf('.jpg') === -1) return; 
-
-			console.log("loading...", file);
-			if(err) throw err;
-
-			var img = new Image(); 
-			img.src = data; 
-
-			var d = new ImageParser(img, {debug: true});
-
-			var answer = parseFileName(file);
-
-			// split into array of letterImg/letterString objects
-			var outp = d.map(function(imgData,index){
-			    // `output` property must be an object
-			    var outputObj = {};
-			    outputObj[answer.substring(index, index+1)] = 1;
-			    console.log(outputObj);
-
-			      return {
-			          input: d[index],
-			        output: outputObj
-			    }
-			});
-
-			// console.log(outp);
-
-			// add image+answer to training data
-			trainingData = trainingData.concat(outp);
-			// if(fileCount > 25) {
-			// 	console.log(trainingData);
-			// }
-			fileCount--; 
-
-			// All files handled
-			if(fileCount === 0) {
-				var net = new brain.NeuralNetwork({hiddenLayers: [128,128]});
-				  net.train(trainingData, {
-				      errorThresh: 0.00002,  // error threshold to reach
-				      iterations: 20000,
-				      learningRate: 0.3,   // maximum training iterations
-				      log: true,           // console.log() progress periodically
-				      logPeriod: 10       // number of iterations between logging
-				  });
-
-				var run = net.toFunction(); 
-
-				fs.writeFile('./output/trained_network_json', JSON.stringify(net.toJSON()), function(err){
-					if(err) {
-						return console.log(err); 
-					}
-
-					console.log("trained network saved");
-				});
-				fs.writeFile('./output/trained_network_function', run.toString(), function(err){
-					if(err) {
-						return console.log(err); 
-					}
-
-					console.log("trained network saved");
-				});
-
-				// test case - do't use here
-				// fs.readFile(inputFolder + 'not_trained/' + '5_6.jpg', function(err, data) {
-				// 	console.log("Handling...", file);
-				// 	if(err) throw err;
-
-				// 	var img = new Image(); 
-				// 	img.src = data; 
-
-				// 	var d = new ImageParser(img, {debug: true});
-				// 	console.log(run(d));
-				// });
-
-			}
-		});
-	
-	});
-});
-
-
 
 function parseFileName(file) {
 	var dash = file.indexOf('_'); 
 	return file.substring(0, dash); 
 }
+
+function test(filename) {
+
+	var json = fs.readFileSync('./output/trained_network_json').toString();
+	json = JSON.parse(json); 
+
+	var net = new brain.NeuralNetwork();
+	// load brain
+	net.fromJSON(json);
+
+		// test case - do't use here
+	fs.readFile('./imgs/' + filename, function(err, data) {
+		console.log("Testing with...", filename);
+		if(err) throw err;
+
+		var img = new Image(); 
+		img.src = data; 
+
+		var d = new ImageParser(img, {debug: true});
+		console.log(d);
+		console.log(net.run(d[0]));
+	});
+}
+
+function train() {
+	const inputFolder = './imgs/';
+	var fileCount = 0; 
+	var trainingData = [];
+	fs.readdir(inputFolder, (err, files) => {
+		if(err) throw err; 
+
+		// count jpgs 
+		for(var i=0; i<files.length; i++) {
+			if(files[i].indexOf('.jpg') !== -1) {
+				fileCount++;
+			}
+		}
+		
+		files.forEach(file => {
+			// console.log(file);
+			fs.readFile(inputFolder + file, function(err, data) {
+				if(file.indexOf('.jpg') === -1) return; 
+
+				console.log("loading...", file);
+				if(err) throw err;
+
+				var img = new Image(); 
+				img.src = data; 
+
+				var d = new ImageParser(img, {debug: true});
+
+				var answer = parseFileName(file);
+
+				// split into array of letterImg/letterString objects
+				var outp = d.map(function(imgData,index){
+				    // `output` property must be an object
+				    var outputObj = {};
+				    outputObj[answer.substring(index, index+1)] = 1;
+				    console.log(outputObj);
+
+				      return {
+				          input: d[index],
+				        output: outputObj
+				    }
+				});
+
+				// console.log(outp);
+
+				// add image+answer to training data
+				trainingData = trainingData.concat(outp);
+				// if(fileCount > 25) {
+				// 	console.log(trainingData);
+				// }
+				fileCount--; 
+
+				// All files handled
+				if(fileCount === 0) {
+					var net = new brain.NeuralNetwork({hiddenLayers: [128,128]});
+					  net.train(trainingData, {
+					      errorThresh: 0.00002,  // error threshold to reach
+					      iterations: 20000,
+					      learningRate: 0.3,   // maximum training iterations
+					      log: true,           // console.log() progress periodically
+					      logPeriod: 10       // number of iterations between logging
+					  });
+
+					var run = net.toFunction(); 
+
+					fs.writeFile('./output/trained_network_json', JSON.stringify(net.toJSON()), function(err){
+						if(err) {
+							return console.log(err); 
+						}
+
+						console.log("trained network saved");
+					});
+					fs.writeFile('./output/trained_network_function', run.toString(), function(err){
+						if(err) {
+							return console.log(err); 
+						}
+
+						console.log("trained network saved");
+					});
+				}
+			});
+		
+		});
+	});
+}
+
+
+if(process.argv[2] == 'train') {
+	console.log("Training brains from imgs-folder"); 
+	train(); 
+}
+
+if(process.argv[2] == 'test') {
+	if(!process.argv[3]) {
+		console.log("File name missing. Give me a file name from ./imgs/");
+	}
+	else {
+		test(process.argv[3]); 
+	}
+}
+
+if(process.argv[2] == 'help' || process.argv[2] == '-h' || process.argv[2] == '--help') {
+	console.log("For training: \t node index.js train");
+	console.log("-------------------------------------");
+	console.log("For testing: \t node index.js test <filename>" );
+	console.log("File name should be a file in ./imgs/");
+	console.log("-------------------------------------");
+
+} 

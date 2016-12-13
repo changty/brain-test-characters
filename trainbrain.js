@@ -18,18 +18,8 @@ function guessImageDatas(imgDatas){
   return outp;
 }
 
-function formatForBrain(imgData){
-  var outp = [];
-  for (var i = 0, j = imgData.data.length; i < j; i+=4) {
-    outp[i/4] = imgData.data[i] / 255;
-  }
-  return outp;
-}
-
-
-
-// IMAGE PARSER
-function ImageParser(img, cb, options){
+function ImageParser(img, options) {
+  var self = this;
 
   // merge defaults into options
   for (var k in this.defaults) {
@@ -41,77 +31,31 @@ function ImageParser(img, cb, options){
   this.ctx = this.c.getContext("2d");
   this.c.width = img.naturalWidth;
   this.c.height= img.naturalHeight;
-  
-  $('body').append(this.c);
+  this.ctx.drawImage(img, 0,0);
 
-  // draw image to canvas
-  this.ctx.drawImage(img, 0, 0);
-  console.log(this.ctx.getImageData(0,0,this.c.width, this.c.height));
+  var threshold = this.thresholder(this.ctx.getImageData(0,0,this.c.width,this.c.height));  
 
-  if(options.callbackEveryStep) { // and show it, if appropriate
-    cb({
-      title: "Base image",
-      data: this.ctx.getImageData(0,0,this.c.width,this.c.height)
-    });
-  }
-  
-  // then run it through processing
-  var process = [this.thresholder, this.extract, this.downscale];
-  // var process = [this.thresholder, this.downscale];
-  if (options.callbackEveryStep){ // show after every process, if we should
-    process = process.map(function(process){
-      // replace process list with proxy functions, that call cb
-      return function(data){
-        var outp = process.call(this,data),
-            obj = {};
-        
-        // format the data
-        if (outp instanceof Array && outp[0] instanceof ImageData) {
-          obj.datas = outp;
-        }
-        if (outp instanceof ImageData) {
-          obj.data = outp;
-        }
-        if (typeof outp === "string") {
-          obj.text = outp;
-        }
-        // extract function name
-        obj.title = (process+"").substr("function ".length);
-        obj.title = obj.title.substr(0, obj.title.indexOf("("));
-        obj.title = obj.title.replace(/([a-z])([A-Z])/g, "$1 $2");
-        
-        // show
-        cb(obj);
-        
-        return outp;
-      };
-    });
-  }
-  
-  // actually do the processing
-  var that = this;
-  var outp = process.reduce(function(prev,process){
-    return process.call(that,prev);
-  }, this.ctx.getImageData(0,0,this.c.width,this.c.height));
-  
-  // END ImageParser constructor
-  console.log("outp", outp);
-  return outp;
+  // console.log("treshold", threshold);
+  var extract = this.extract(threshold);
+
+  // console.log("extract", extract);
+  var downscale = this.downscale(extract); 
+
+  // console.log("downscale", downscale);
+  var forBrain = downscale.map(function(imgData){ return self.formatForBrain(imgData) });
+
+  return forBrain; 
+  // console.log("forBrain", forBrain);
 }
 
-
-
 ImageParser.prototype.defaults = {
-  callbackEveryStep: false,
   threshold: 60,
-  downscaledSize: 16
+  downscaledSize: 16,
+  debug: false,
 };
-
-
 
 // Image functions
 ImageParser.prototype.thresholder = function Threshold(imgData){
-  console.log("threshold", imgData);
   // for every pixels red channel value
   for (var i = 0, j = imgData.data.length; i<j; i+=4) {
     // threshold it
@@ -122,19 +66,10 @@ ImageParser.prototype.thresholder = function Threshold(imgData){
     }
   }
 
-  var c = document.createElement("canvas");
-  $('body').append(c);
-  var ctx = this.c.getContext("2d");
-  c.width = imgData.width;
-  c.height= imgData.height;
-  // draw image to canvas
-  ctx.putImageData(imgData, 0, 0);
-
   return imgData;
 };
 
 ImageParser.prototype.extract = function ExtractLetters(imgData){
-  console.log("extract", imgData, imgData.height, imgData.width);
   this.ctx.putImageData(imgData,0,0); // for easy cropping
   var letters = [];
   
@@ -172,13 +107,22 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
       currentLetter = {};
     }
     else {
-      console.log("letter not found");
+      // console.log("letter not found");
     }
   }
   
-  console.log("letters", letters);
   return letters;
 };
+
+ImageParser.prototype.formatForBrain = function FormatForBrain(imgData){
+  // console.log("format", imgData);
+  // imgData = imgData[0];
+  var outp = [];
+  for (var i = 0, j = imgData.data.length; i < j; i+=4) {
+    outp[i/4] = imgData.data[i] / 255;
+  }
+  return outp;
+}
 
 ImageParser.prototype.downscale = function Downscale(imgDatas){
   if(Array.isArray(imgDatas) && imgDatas.length === 0) {
@@ -208,9 +152,7 @@ ImageParser.prototype.downscale = function Downscale(imgDatas){
     }
     
     letters.push(square);
-    console.log("square", square);
   }
-  console.log("downscale:", letters);
   
   return letters;
 };
@@ -218,109 +160,32 @@ ImageParser.prototype.downscale = function Downscale(imgDatas){
 // INIT
 
 // add test images
-for(var i=0; i<11; ++i) {
-  $('body').append('<img src="imgs/' + i +'.jpg" width="50"/>');
-  console.log("Added img "+ i + ".jpg");
-}
+// trained with
+$('body').append('<img src="imgs/1_1.jpg" width="50"/>');
 
-var imgs = document.getElementsByTagName("img");
-for (var i = 0; i < imgs.length; ++i) {
-  imgs[i].addEventListener("click", function(){
-    // on image click, parse it
-    previewer.innerHTML = ""; // but first, empty previewer
+// not trained with
+$('body').append('<img src="imgs/not_trained/0_6.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/1_11.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/5_6.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/7_6.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/10_6.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/8_6.jpg" width="50"/>');
 
-    var data = new ImageParser(this, appendToPreviewer,
-                                {callbackEveryStep: true});
-    
-    appendToPreviewer({
-      title: "Guess",
-      text: "test"
-      // text: guessImageDatas(data).join(" ")
-    });
-  });
-}
-
-
-
-// UTILS
-var previewer = document.getElementsByClassName("previewer")[0];
-
-function appendToPreviewer(obj){
-  var preview = document.createElement("div");
-  preview.classList.add("preview");
-  if (obj.title) {
-    var p = document.createElement("p");
-    p.textContent = obj.title;
-    p.classList.add("title");
-    preview.appendChild(p);
-  }
-  
-  // convert image data(s) to base64 URL
-  if (obj.data) { obj.datas = [obj.data] }
-  if (obj.datas) {
-    var c = document.createElement("canvas"),
-        ctx = c.getContext("2d");
-    
-    for (var i = 0; i < obj.datas.length; ++i) {
-      c.width = obj.datas[i].width;
-      c.height = obj.datas[i].height;
-      ctx.putImageData(obj.datas[i], 0, 0);
-
-      var img = document.createElement("img");
-      img.src = c.toDataURL("image/png");
-
-      // and show it
-      preview.appendChild(img);
-    }
-  }
-  
-  if (obj.text) {
-    var p = document.createElement("p");
-    p.textContent = obj.text;
-    preview.appendChild(p);
-  }
-  
-  // finally show the preview
-  previewer.appendChild(preview);
-}
-
-$(document).ready(function(e){
+$(document).ready(function(e) {
   var imgs = document.getElementsByTagName("img");
+  for (var i = 0; i < imgs.length; ++i) {
+    imgs[i].addEventListener("click", function(){
+      // console.log(this);
 
-  var trainingData = [];
-  for (var i = 1; i < 4; ++i) {
-    console.log("img", i, imgs[i]);
-      var data = new ImageParser(imgs[i], null, {}); // extract letter images
-      var answer = i + ""; // manually entered
+        var data = new ImageParser(this, {debug: false});
+        console.log(data);
+        console.log(run(data));
 
-      console.log("data", data);
-    // format image data
-    var formattedData = data.map(function(imgData){ return formatForBrain(imgData) });
-
-    // split into array of letterImg/letterString objects
-    var outp = data.map(function(imgData,index){
-          // `output` property must be an object
-        var outputObj = {};
-        outputObj[answer[index]] = 1;
-
-          return {
-              input: data[index],
-            output: outputObj
-        }
     });
-
-    // add image+answer to training data
-    trainingData = trainingData.concat(outp);
   }
 
-  console.log("Training data", trainingData);
-  // var net = new brain.NeuralNetwork({hiddenLayers: [128,128]});
-  // net.train(trainingData, {
-  //     errorThresh: 0.02,  // error threshold to reach
-  //     iterations: 200,   // maximum training iterations
-  //     log: true,           // console.log() progress periodically
-  //     logPeriod: 10       // number of iterations between logging
-  // });
 
 });
 
+
+  

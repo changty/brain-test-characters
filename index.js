@@ -5,6 +5,8 @@ var ImageData = Canvas.ImageData;
 var fs = require('fs');
 
 function ImageParser(img, options) {
+	var self = this;
+
 	// merge defaults into options
 	for (var k in this.defaults) {
 	  options[k] = options[k] || this.defaults[k];
@@ -40,7 +42,9 @@ function ImageParser(img, options) {
 	var downscale = this.downscale(extract); 
 
 	if(this.opts.debug) {
-		this.tempCtx.putImageData(downscale[0], 0,0);
+		for(var i=0; i<downscale.length; i++) {
+			this.tempCtx.putImageData(downscale[i], i*16,0);
+		}
 
 		out = fs.createWriteStream(__dirname + '/output/output.png');
 
@@ -51,7 +55,8 @@ function ImageParser(img, options) {
 	}
 
 	// console.log("downscale", downscale);
-	var forBrain = this.formatForBrain(downscale);
+	var forBrain = downscale.map(function(imgData){ return self.formatForBrain(imgData) });
+	return forBrain; 
 	// console.log("forBrain", forBrain);
 }
 
@@ -114,7 +119,7 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
       currentLetter = {};
     }
     else {
-      console.log("letter not found");
+      // console.log("letter not found");
     }
   }
   
@@ -156,18 +161,114 @@ ImageParser.prototype.downscale = function Downscale(imgDatas){
 
 ImageParser.prototype.formatForBrain = function FormatForBrain(imgData){
 	// console.log("format", imgData);
-	var imgData = imgData[0];
-  var outp = [];
-  for (var i = 0, j = imgData.data.length; i < j; i+=4) {
-    outp[i/4] = imgData.data[i] / 255;
-  }
-  return outp;
+	// imgData = imgData[0];
+	var outp = [];
+	for (var i = 0, j = imgData.data.length; i < j; i+=4) {
+		outp[i/4] = imgData.data[i] / 255;
+	}
+	return outp;
 }
 
-fs.readFile(__dirname+'/imgs/2.jpg', function(err, data) {
-	if(err) throw err; 
-	var img = new Image(); 
-	img.src = data; 
 
-	var d = new ImageParser(img, {debug: true});
+const inputFolder = './imgs/';
+var fileCount = 0; 
+var trainingData = [];
+fs.readdir(inputFolder, (err, files) => {
+	if(err) throw err; 
+
+	// count jpgs 
+	for(var i=0; i<files.length; i++) {
+		if(files[i].indexOf('.jpg') !== -1) {
+			fileCount++;
+		}
+	}
+	
+	files.forEach(file => {
+		// console.log(file);
+		fs.readFile(inputFolder + file, function(err, data) {
+			if(file.indexOf('.jpg') === -1) return; 
+
+			console.log("loading...", file);
+			if(err) throw err;
+
+			var img = new Image(); 
+			img.src = data; 
+
+			var d = new ImageParser(img, {debug: true});
+
+			var answer = parseFileName(file);
+
+			// split into array of letterImg/letterString objects
+			var outp = d.map(function(imgData,index){
+			    // `output` property must be an object
+			    var outputObj = {};
+			    outputObj[answer.substring(index, index+1)] = 1;
+			    console.log(outputObj);
+
+			      return {
+			          input: d[index],
+			        output: outputObj
+			    }
+			});
+
+			// console.log(outp);
+
+			// add image+answer to training data
+			trainingData = trainingData.concat(outp);
+			// if(fileCount > 25) {
+			// 	console.log(trainingData);
+			// }
+			fileCount--; 
+
+			// All files handled
+			if(fileCount === 0) {
+				var net = new brain.NeuralNetwork({hiddenLayers: [128,128]});
+				  net.train(trainingData, {
+				      errorThresh: 0.00002,  // error threshold to reach
+				      iterations: 20000,
+				      learningRate: 0.3,   // maximum training iterations
+				      log: true,           // console.log() progress periodically
+				      logPeriod: 10       // number of iterations between logging
+				  });
+
+				var run = net.toFunction(); 
+
+				fs.writeFile('./output/trained_network_json', JSON.stringify(net.toJSON()), function(err){
+					if(err) {
+						return console.log(err); 
+					}
+
+					console.log("trained network saved");
+				});
+				fs.writeFile('./output/trained_network_function', run.toString(), function(err){
+					if(err) {
+						return console.log(err); 
+					}
+
+					console.log("trained network saved");
+				});
+
+				// test case - do't use here
+				// fs.readFile(inputFolder + 'not_trained/' + '5_6.jpg', function(err, data) {
+				// 	console.log("Handling...", file);
+				// 	if(err) throw err;
+
+				// 	var img = new Image(); 
+				// 	img.src = data; 
+
+				// 	var d = new ImageParser(img, {debug: true});
+				// 	console.log(run(d));
+				// });
+
+			}
+		});
+	
+	});
 });
+
+
+
+function parseFileName(file) {
+	var dash = file.indexOf('_'); 
+	return file.substring(0, dash); 
+}

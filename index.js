@@ -64,7 +64,7 @@ function ImageParser(img, options) {
 
 ImageParser.prototype.defaults = {
   threshold: 150,
-  downscaledSize: 16,
+  downscaledSize: 24,
   debug: false,
 };
 
@@ -86,6 +86,9 @@ ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) 
 
   var brightness = Math.floor(colorSum / (self.c.width*self.c.height));
   console.log("Brightness", brightness);
+  if(brightness > 150) {
+    brightness = brightness/1.2;
+  }
   if(brightness < 105) {
     brightness = brightness/1.5; 
   }

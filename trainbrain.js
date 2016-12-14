@@ -70,7 +70,7 @@ function ImageParser(img, options) {
 
 ImageParser.prototype.defaults = {
   threshold: 60,
-  downscaledSize: 16,
+  downscaledSize: 24,
   debug: false,
 };
 
@@ -92,6 +92,9 @@ ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) 
 
   var brightness = Math.floor(colorSum / (self.c.width*self.c.height));
   console.log("Brightness", brightness);
+  if(brightness > 150) {
+    brightness = brightness/1.2;
+  }
   if(brightness < 105) {
     brightness = brightness/1.5; 
   }
@@ -269,6 +272,22 @@ $('body').append('<img src="imgs/discarded/9_4.jpg" width="50"/>');
 $('body').append('<img src="imgs/discarded/7_4.jpg" width="50"/>');
 $('body').append('<img src="imgs/discarded/6_3.jpg" width="50"/>');
 $('body').append('<img src="imgs/discarded/5_4.jpg" width="50"/>');
+$('body').append('<img src="imgs/discarded/0_4.jpg" width="50"/>');
+$('body').append('<img src="imgs/discarded/0_3.jpg" width="50"/>');
+$('body').append('<img src="imgs/discarded/0_5.jpg" width="50"/>');
+$('body').append('<img src="imgs/discarded/2_3.jpg" width="50"/>');
+$('body').append('<img src="imgs/discarded/3_4.jpg" width="50"/>');
+$('body').append('<img src="imgs/discarded/5_4.jpg" width="50"/>');
+$('body').append('<img src="imgs/discarded/4_3.jpg" width="50"/>');
+
+
+
+$('body').append('<img src="imgs/discarded/ABCDEFGHIJKLMN_7.jpg" width="50"/>');
+
+$('body').append('<img src="imgs/discarded/OPQRSTUVWXYZÖÄÅ_1.jpg" width="50"/>');
+
+$('body').append('<img src="imgs/discarded/123456789+-_6.jpg" width="50"/>');
+
 
 
 $(document).ready(function(e) {

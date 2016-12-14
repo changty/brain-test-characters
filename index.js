@@ -281,7 +281,7 @@ function train() {
 				if(fileCount === 0) {
 					var net = new brain.NeuralNetwork({hiddenLayers: [128, 128]});
 					  net.train(trainingData, {
-					      errorThresh: 0.0005,  // error threshold to reach
+					      errorThresh: 0.0006,  // error threshold to reach
 					      iterations: 20000,
 					      learningRate: 0.3,   // maximum training iterations
 					      log: true,           // console.log() progress periodically

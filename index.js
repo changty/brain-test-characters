@@ -25,6 +25,8 @@ function ImageParser(img, options) {
 	var out;
 	var stream;
 
+	this.calculateThreshold(this.ctx.getImageData(0,0,this.c.width,this.c.height));
+
 	var threshold = this.thresholder(this.ctx.getImageData(0,0,this.c.width,this.c.height));	
 
 	if(this.opts.debug) {
@@ -46,7 +48,7 @@ function ImageParser(img, options) {
 			this.tempCtx.putImageData(downscale[i], i*16,0);
 		}
 
-		out = fs.createWriteStream(__dirname + '/output/output.png');
+		out = fs.createWriteStream(__dirname + '/output/' + this.opts.name + '.png');
 
 		stream = this.tempCanvas.pngStream();
 		stream.on('data', function(chunk){
@@ -61,10 +63,33 @@ function ImageParser(img, options) {
 }
 
 ImageParser.prototype.defaults = {
-  threshold: 60,
+  threshold: 150,
   downscaledSize: 16,
   debug: false,
 };
+
+ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) {
+	var self = this; 
+
+	var data = imgData.data;
+	var r,g,b,avg;
+	var colorSum = 0;
+
+	for(var x = 0, len = data.length; x < len; x+=4) {
+	    r = data[x];
+	    g = data[x+1];
+	    b = data[x+2];
+
+	    avg = Math.floor((r+g+b)/3);
+	    colorSum += avg;
+	}
+
+	var brightness = Math.floor(colorSum / (self.c.width*self.c.height));
+	console.log("Brightness", brightness);
+	this.opts.threshold = brightness/2; 
+	console.log("threshold: ", this.opts.threshold);
+
+}
 
 // Image functions
 ImageParser.prototype.thresholder = function Threshold(imgData){
@@ -106,6 +131,9 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
 
     // if we've reached the end of this letter, push it to letters array
     if (!foundLetterInColumn && foundLetter) {
+    	// if(currentLetter.maxX-currentLetter.minX > 0 && currentLetter.maxY-currentLetter.minY > 0) {
+
+    try {
       // get letter pixels
       letters.push(this.ctx.getImageData(
         currentLetter.minX,
@@ -113,6 +141,16 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
         currentLetter.maxX - currentLetter.minX,
         currentLetter.maxY - currentLetter.minY
       ));
+  }
+  catch(err) {
+  	console.log(err); 
+  	foundLetter = foundLetterInColumn = false;
+  	currentLetter = {};
+  }
+  	// }
+  	// else {
+  	// 	console.log("no?")
+  	// }
       
       // reset
       foundLetter = foundLetterInColumn = false;
@@ -160,8 +198,6 @@ ImageParser.prototype.downscale = function Downscale(imgDatas){
 };
 
 ImageParser.prototype.formatForBrain = function FormatForBrain(imgData){
-	// console.log("format", imgData);
-	// imgData = imgData[0];
 	var outp = [];
 	for (var i = 0, j = imgData.data.length; i < j; i+=4) {
 		outp[i/4] = imgData.data[i] / 255;
@@ -177,15 +213,6 @@ function parseFileName(file) {
 }
 
 function test(filename) {
-
-	var json = fs.readFileSync('./output/trained_network_json').toString();
-	json = JSON.parse(json); 
-
-	var net = new brain.NeuralNetwork();
-	// load brain
-	net.fromJSON(json);
-
-		// test case - do't use here
 	fs.readFile('./imgs/' + filename, function(err, data) {
 		console.log("Testing with...", filename);
 		if(err) throw err;
@@ -194,8 +221,8 @@ function test(filename) {
 		img.src = data; 
 
 		var d = new ImageParser(img, {debug: true});
-		console.log(d);
-		console.log(net.run(d[0]));
+		// console.log(d);
+		guessImageDatas(d);
 	});
 }
 
@@ -224,7 +251,7 @@ function train() {
 				var img = new Image(); 
 				img.src = data; 
 
-				var d = new ImageParser(img, {debug: true});
+				var d = new ImageParser(img, {debug: true, name: file});
 
 				var answer = parseFileName(file);
 
@@ -252,9 +279,9 @@ function train() {
 
 				// All files handled
 				if(fileCount === 0) {
-					var net = new brain.NeuralNetwork({hiddenLayers: [128,128]});
+					var net = new brain.NeuralNetwork({hiddenLayers: [128, 128]});
 					  net.train(trainingData, {
-					      errorThresh: 0.00002,  // error threshold to reach
+					      errorThresh: 0.0005,  // error threshold to reach
 					      iterations: 20000,
 					      learningRate: 0.3,   // maximum training iterations
 					      log: true,           // console.log() progress periodically
@@ -282,6 +309,35 @@ function train() {
 		
 		});
 	});
+}
+
+
+function guessImageDatas(imgDatas){
+
+	var json = fs.readFileSync('./output/trained_network_json').toString();
+	json = JSON.parse(json); 
+
+	var net = new brain.NeuralNetwork();
+	// load brain
+	net.fromJSON(json);
+
+  var outp = [];
+  for (var i = 0; i < imgDatas.length; ++i) {
+    var guess = net.run(imgDatas[i]);
+    
+    //find most likely guess
+    var max = {txt: "", val: 0};
+    for (var k in guess) {
+      if (guess[k] > max.val) {
+        max = {txt: k, val: guess[k]};
+      }
+    }
+    
+    outp.push(max.txt);
+  	console.log(max.txt, max.val);
+  }
+  
+  return outp;
 }
 
 

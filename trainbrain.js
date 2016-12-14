@@ -2,7 +2,7 @@
 function guessImageDatas(imgDatas){
   var outp = [];
   for (var i = 0; i < imgDatas.length; ++i) {
-    var guess = run(formatForBrain(imgDatas[i]));
+    var guess = run(imgDatas[i]);
     
     //find most likely guess
     var max = {txt: "", val: 0};
@@ -33,6 +33,8 @@ function ImageParser(img, options) {
   this.c.height= img.naturalHeight;
   this.ctx.drawImage(img, 0,0);
 
+  this.calculateThreshold(this.ctx.getImageData(0,0,this.c.width,this.c.height));
+
   var threshold = this.thresholder(this.ctx.getImageData(0,0,this.c.width,this.c.height));  
 
   // console.log("treshold", threshold);
@@ -53,6 +55,30 @@ ImageParser.prototype.defaults = {
   downscaledSize: 16,
   debug: false,
 };
+
+ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) {
+  var self = this; 
+
+  var data = imgData.data;
+  var r,g,b,avg;
+  var colorSum = 0;
+
+  for(var x = 0, len = data.length; x < len; x+=4) {
+      r = data[x];
+      g = data[x+1];
+      b = data[x+2];
+
+      avg = Math.floor((r+g+b)/3);
+      colorSum += avg;
+  }
+
+  var brightness = Math.floor(colorSum / (self.c.width*self.c.height));
+  console.log("Brightness", brightness);
+  this.opts.threshold = brightness/2; 
+  console.log("threshold: ", this.opts.threshold);
+
+}
+
 
 // Image functions
 ImageParser.prototype.thresholder = function Threshold(imgData){
@@ -95,12 +121,15 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
     // if we've reached the end of this letter, push it to letters array
     if (!foundLetterInColumn && foundLetter) {
       // get letter pixels
-      letters.push(this.ctx.getImageData(
-        currentLetter.minX,
-        currentLetter.minY,
-        currentLetter.maxX - currentLetter.minX,
-        currentLetter.maxY - currentLetter.minY
-      ));
+      // if(currentLetter.maxX-currentLetter.minX > 0 && currentLetter.maxY-currentLetter.minY > 0) {
+        letters.push(this.ctx.getImageData(
+          currentLetter.minX,
+          currentLetter.minY,
+          currentLetter.maxX - currentLetter.minX,
+          currentLetter.maxY - currentLetter.minY
+        ));
+      // }      
+
       
       // reset
       foundLetter = foundLetterInColumn = false;
@@ -115,8 +144,6 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
 };
 
 ImageParser.prototype.formatForBrain = function FormatForBrain(imgData){
-  // console.log("format", imgData);
-  // imgData = imgData[0];
   var outp = [];
   for (var i = 0, j = imgData.data.length; i < j; i+=4) {
     outp[i/4] = imgData.data[i] / 255;
@@ -170,6 +197,15 @@ $('body').append('<img src="imgs/not_trained/5_6.jpg" width="50"/>');
 $('body').append('<img src="imgs/not_trained/7_6.jpg" width="50"/>');
 $('body').append('<img src="imgs/not_trained/10_6.jpg" width="50"/>');
 $('body').append('<img src="imgs/not_trained/8_6.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/9_6_rotate1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/9_6_rotate2.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/9_6_rotate3.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/9_6_rotate4.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/9_6_rotate5.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/1_font1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/1_font2.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/1_font3.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/3_7.jpg" width="50"/>');
 
 $(document).ready(function(e) {
   var imgs = document.getElementsByTagName("img");
@@ -178,8 +214,7 @@ $(document).ready(function(e) {
       // console.log(this);
 
         var data = new ImageParser(this, {debug: false});
-        console.log(data);
-        console.log(run(data[0]));
+        console.log(guessImageDatas(data));
 
     });
   }

@@ -167,6 +167,7 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
     }
     
     return letters;
+};
 
 ImageParser.prototype.downscale = function Downscale(imgDatas){
   if(Array.isArray(imgDatas) && imgDatas.length === 0) {
@@ -201,7 +202,7 @@ ImageParser.prototype.downscale = function Downscale(imgDatas){
   return letters;
 };
 
-ImageParser.prototype.formatForBrain = function FormatForBrain(imgData){
+ImageParser.prototype.formatForBrain = function FormatForBrain(imgData) {
 	var outp = [];
 	for (var i = 0, j = imgData.data.length; i < j; i+=4) {
 		outp[i/4] = imgData.data[i] / 255;
@@ -285,7 +286,7 @@ function train() {
 				if(fileCount === 0) {
 					var net = new brain.NeuralNetwork({hiddenLayers: [128, 128]});
 					  net.train(trainingData, {
-					      errorThresh: 0.0006,  // error threshold to reach
+					      errorThresh: 0.00022,  // error threshold to reach
 					      iterations: 20000,
 					      learningRate: 0.3,   // maximum training iterations
 					      log: true,           // console.log() progress periodically

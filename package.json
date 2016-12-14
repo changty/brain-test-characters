@@ -18,6 +18,7 @@
   "homepage": "https://github.com/changty/brain-test-characters#readme",
   "dependencies": {
     "brain": "^0.7.0",
+    "caman": "^4.1.2",
     "canvas": "^1.6.2"
   }
 }

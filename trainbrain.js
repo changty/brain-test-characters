@@ -13,6 +13,7 @@ function guessImageDatas(imgDatas){
     }
     
     outp.push(max.txt);
+    console.log("most confident: ", max.txt, max.val);
   }
   
   return outp;
@@ -21,6 +22,7 @@ function guessImageDatas(imgDatas){
 function ImageParser(img, options) {
   var self = this;
 
+  $('.temp').remove();
   // merge defaults into options
   for (var k in this.defaults) {
     options[k] = options[k] || this.defaults[k];
@@ -33,15 +35,31 @@ function ImageParser(img, options) {
   this.c.height= img.naturalHeight;
   this.ctx.drawImage(img, 0,0);
 
+  this.tempCanvas = $('<canvas class="temp"></canvas>');
+  this.tempCanvas[0].width = img.naturalWidth; 
+  this.tempCanvas[0].height = img.naturalHeight
+  this.tempCtx = this.tempCanvas[0].getContext('2d'); 
+  this.tempCtx.drawImage(img, 0,0);
+
+  $('body').append(this.tempCanvas);
+
   this.calculateThreshold(this.ctx.getImageData(0,0,this.c.width,this.c.height));
 
   var threshold = this.thresholder(this.ctx.getImageData(0,0,this.c.width,this.c.height));  
+  this.tempCtx.putImageData(threshold, 0,0);
 
   // console.log("treshold", threshold);
   var extract = this.extract(threshold);
+  for(var i=0; i<extract.length; i++) {
+    this.tempCtx.putImageData(extract[0], 0,0);
+  }
 
   // console.log("extract", extract);
   var downscale = this.downscale(extract); 
+  for(var i=0; i<downscale.length; i++) {
+    this.tempCtx.putImageData(downscale[i], i*16,0);
+  }
+
 
   // console.log("downscale", downscale);
   var forBrain = downscale.map(function(imgData){ return self.formatForBrain(imgData) });
@@ -74,7 +92,13 @@ ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) 
 
   var brightness = Math.floor(colorSum / (self.c.width*self.c.height));
   console.log("Brightness", brightness);
-  this.opts.threshold = brightness/2; 
+  if(brightness < 105) {
+    brightness = brightness/1.5; 
+  }
+  if(brightness < 70) {
+    birghtness = brightness/2;
+  }
+  this.opts.threshold = brightness; 
   console.log("threshold: ", this.opts.threshold);
 
 }
@@ -82,6 +106,7 @@ ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) 
 
 // Image functions
 ImageParser.prototype.thresholder = function Threshold(imgData){
+
   // for every pixels red channel value
   for (var i = 0, j = imgData.data.length; i<j; i+=4) {
     // threshold it
@@ -101,7 +126,8 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
   
   var currentLetter = {};
   var foundLetter = false;
-  var notLetter =0; 
+  var pixelsInLetter = 0; 
+
   for (var x = 0, j = imgData.width; x < j; ++x) { // for every column
     var foundLetterInColumn = false;
     
@@ -109,6 +135,7 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
       var pixIndex = (y*imgData.width+x)*4;
       if (imgData.data[pixIndex] === 255) { // if we're dealing with a letter pixel
         foundLetterInColumn = foundLetter = true;
+      pixelsInLetter++; 
         // set data for this letter
         currentLetter.minX = Math.min(x, currentLetter.minX || Infinity);
         currentLetter.maxX = Math.max(x, currentLetter.maxX || -1);
@@ -122,21 +149,24 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
     if (!foundLetterInColumn && foundLetter) {
       // get letter pixels
       // if(currentLetter.maxX-currentLetter.minX > 0 && currentLetter.maxY-currentLetter.minY > 0) {
+        console.log("pixels in letter", pixelsInLetter);
+        if (pixelsInLetter > 100) {
         letters.push(this.ctx.getImageData(
           currentLetter.minX,
           currentLetter.minY,
           currentLetter.maxX - currentLetter.minX,
           currentLetter.maxY - currentLetter.minY
         ));
-      // }      
+      }      
 
       
       // reset
       foundLetter = foundLetterInColumn = false;
       currentLetter = {};
+      pixelsInLetter = 0; 
     }
     else {
-      // console.log("letter not found");
+
     }
   }
   
@@ -191,21 +221,55 @@ ImageParser.prototype.downscale = function Downscale(imgDatas){
 $('body').append('<img src="imgs/1_1.jpg" width="50"/>');
 
 // not trained with
-$('body').append('<img src="imgs/not_trained/0_6.jpg" width="50"/>');
-$('body').append('<img src="imgs/not_trained/1_11.jpg" width="50"/>');
-$('body').append('<img src="imgs/not_trained/5_6.jpg" width="50"/>');
-$('body').append('<img src="imgs/not_trained/7_6.jpg" width="50"/>');
-$('body').append('<img src="imgs/not_trained/10_6.jpg" width="50"/>');
-$('body').append('<img src="imgs/not_trained/8_6.jpg" width="50"/>');
-$('body').append('<img src="imgs/not_trained/9_6_rotate1.jpg" width="50"/>');
-$('body').append('<img src="imgs/not_trained/9_6_rotate2.jpg" width="50"/>');
-$('body').append('<img src="imgs/not_trained/9_6_rotate3.jpg" width="50"/>');
-$('body').append('<img src="imgs/not_trained/9_6_rotate4.jpg" width="50"/>');
-$('body').append('<img src="imgs/not_trained/9_6_rotate5.jpg" width="50"/>');
-$('body').append('<img src="imgs/not_trained/1_font1.jpg" width="50"/>');
-$('body').append('<img src="imgs/not_trained/1_font2.jpg" width="50"/>');
-$('body').append('<img src="imgs/not_trained/1_font3.jpg" width="50"/>');
-$('body').append('<img src="imgs/not_trained/3_7.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/0_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/1_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/2_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/3_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/4_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/5_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/7_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/8_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/10_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/9_testi1.jpg" width="50"/>');
+
+$('body').append('<img src="imgs/not_trained/0_testi2.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/1_testi2.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/2_testi2.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/3_testi2.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/4_testi2.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/5_testi2.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/7_testi2.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/8_testi2.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/10_testi2.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/9_testi2.jpg" width="50"/>');
+
+$('body').append('<img src="imgs/not_trained/1_testi3.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/1_testi4.jpg" width="50"/>');
+
+$('body').append('<img src="imgs/not_trained/9_7.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/1_14.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/0_7.jpg" width="50"/>');
+
+$('body').append('<img src="imgs/not_trained/t_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/r_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/7_testi7.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/+_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/ö_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/b_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/a_testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/b_testi2.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/b_testi3.jpg" width="50"/>');
+
+$('body').append('<img src="imgs/not_trained/8_testi3.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/8_testi4.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/8_testi5.jpg" width="50"/>');
+
+$('body').append('<img src="imgs/discarded/10_4.jpg" width="50"/>');
+$('body').append('<img src="imgs/discarded/9_4.jpg" width="50"/>');
+$('body').append('<img src="imgs/discarded/7_4.jpg" width="50"/>');
+$('body').append('<img src="imgs/discarded/6_3.jpg" width="50"/>');
+$('body').append('<img src="imgs/discarded/5_4.jpg" width="50"/>');
+
 
 $(document).ready(function(e) {
   var imgs = document.getElementsByTagName("img");

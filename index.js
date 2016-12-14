@@ -69,25 +69,31 @@ ImageParser.prototype.defaults = {
 };
 
 ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) {
-	var self = this; 
+  var self = this; 
 
-	var data = imgData.data;
-	var r,g,b,avg;
-	var colorSum = 0;
+  var data = imgData.data;
+  var r,g,b,avg;
+  var colorSum = 0;
 
-	for(var x = 0, len = data.length; x < len; x+=4) {
-	    r = data[x];
-	    g = data[x+1];
-	    b = data[x+2];
+  for(var x = 0, len = data.length; x < len; x+=4) {
+      r = data[x];
+      g = data[x+1];
+      b = data[x+2];
 
-	    avg = Math.floor((r+g+b)/3);
-	    colorSum += avg;
-	}
+      avg = Math.floor((r+g+b)/3);
+      colorSum += avg;
+  }
 
-	var brightness = Math.floor(colorSum / (self.c.width*self.c.height));
-	console.log("Brightness", brightness);
-	this.opts.threshold = brightness/2; 
-	console.log("threshold: ", this.opts.threshold);
+  var brightness = Math.floor(colorSum / (self.c.width*self.c.height));
+  console.log("Brightness", brightness);
+  if(brightness < 105) {
+    brightness = brightness/1.5; 
+  }
+  if(brightness < 70) {
+    birghtness = brightness/2;
+  }
+  this.opts.threshold = brightness; 
+  console.log("threshold: ", this.opts.threshold);
 
 }
 
@@ -112,7 +118,8 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
   
   var currentLetter = {};
   var foundLetter = false;
-  var notLetter =0; 
+  var pixelsInLetter = 0; 
+
   for (var x = 0, j = imgData.width; x < j; ++x) { // for every column
     var foundLetterInColumn = false;
     
@@ -120,6 +127,8 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
       var pixIndex = (y*imgData.width+x)*4;
       if (imgData.data[pixIndex] === 255) { // if we're dealing with a letter pixel
         foundLetterInColumn = foundLetter = true;
+    	pixelsInLetter++;
+
         // set data for this letter
         currentLetter.minX = Math.min(x, currentLetter.minX || Infinity);
         currentLetter.maxX = Math.max(x, currentLetter.maxX || -1);
@@ -129,40 +138,32 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
 
     }
 
-    // if we've reached the end of this letter, push it to letters array
-    if (!foundLetterInColumn && foundLetter) {
-    	// if(currentLetter.maxX-currentLetter.minX > 0 && currentLetter.maxY-currentLetter.minY > 0) {
+      // if we've reached the end of this letter, push it to letters array
+      if (!foundLetterInColumn && foundLetter) {
+        // get letter pixels
+        // if(currentLetter.maxX-currentLetter.minX > 0 && currentLetter.maxY-currentLetter.minY > 0) {
+          console.log("pixels in letter", pixelsInLetter);
+          if (pixelsInLetter > 100) {
+          letters.push(this.ctx.getImageData(
+            currentLetter.minX,
+            currentLetter.minY,
+            currentLetter.maxX - currentLetter.minX,
+            currentLetter.maxY - currentLetter.minY
+          ));
+        }      
 
-    try {
-      // get letter pixels
-      letters.push(this.ctx.getImageData(
-        currentLetter.minX,
-        currentLetter.minY,
-        currentLetter.maxX - currentLetter.minX,
-        currentLetter.maxY - currentLetter.minY
-      ));
-  }
-  catch(err) {
-  	console.log(err); 
-  	foundLetter = foundLetterInColumn = false;
-  	currentLetter = {};
-  }
-  	// }
-  	// else {
-  	// 	console.log("no?")
-  	// }
-      
-      // reset
-      foundLetter = foundLetterInColumn = false;
-      currentLetter = {};
+        
+        // reset
+        foundLetter = foundLetterInColumn = false;
+        currentLetter = {};
+        pixelsInLetter = 0; 
+      }
+      else {
+
+      }
     }
-    else {
-      // console.log("letter not found");
-    }
-  }
-  
-  return letters;
-};
+    
+    return letters;
 
 ImageParser.prototype.downscale = function Downscale(imgDatas){
   if(Array.isArray(imgDatas) && imgDatas.length === 0) {

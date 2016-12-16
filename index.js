@@ -268,7 +268,8 @@ function test() {
 				fileCount--; 
 
 				if(fileCount === 0) {
-					console.log("\nTesting done!");
+					console.log("\n=========================");
+					console.log("Testing done!");
 					console.log("=========================\n");
 					console.log("Characters:\t", testedCharacters);
 					console.log("Correct:\t", corrects);
@@ -289,6 +290,7 @@ function train() {
 	const inputFolder = './imgs/';
 	var fileCount = 0; 
 	var trainingData = [];
+	var testedChars = {}
 	fs.readdir(inputFolder, (err, files) => {
 		if(err) throw err; 
 
@@ -321,7 +323,14 @@ function train() {
 				    outputObj[answer.substring(index, index+1)] = 1;
 				    console.log(outputObj);
 
-				      return {
+				    if(!testedChars[answer.substring(index, index+1)]){
+				    	testedChars[answer.substring(index, index+1)] = 1; 
+				    }
+				 
+				    testedChars[answer.substring(index, index+1)]++;
+				    
+
+			      return {
 				          input: d[index],
 				        output: outputObj
 				    }
@@ -338,6 +347,13 @@ function train() {
 
 				// All files handled
 				if(fileCount === 0) {
+					console.log("\n=========================================");
+					console.log("Files loaded, starting training!");
+					console.log("=========================================\n");
+					console.log("Characters:\n", testedChars);
+					console.log("=========================================\n");
+
+
 					var net = new brain.NeuralNetwork({hiddenLayers: [128, 128]});
 					  net.train(trainingData, {
 					      errorThresh: 0.0005,  // error threshold to reach 0.0001

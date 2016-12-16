@@ -318,9 +318,12 @@ function train() {
 
 				// split into array of letterImg/letterString objects
 				var outp = d.map(function(imgData,index){
+
 				    // `output` property must be an object
 				    var outputObj = {};
-				    outputObj[answer.substring(index, index+1)] = 1;
+
+					outputObj[answer.substring(index, index+1)] = 1;				    	
+				    
 				    console.log(outputObj);
 
 				    if(!testedChars[answer.substring(index, index+1)]){
@@ -340,6 +343,7 @@ function train() {
 
 				// add image+answer to training data
 				trainingData = trainingData.concat(outp);
+				
 				// if(fileCount > 25) {
 				// 	console.log(trainingData);
 				// }

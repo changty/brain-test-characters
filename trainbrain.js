@@ -45,7 +45,7 @@ function ImageParser(img, options) {
 
   this.calculateThreshold(this.ctx.getImageData(0,0,this.c.width,this.c.height));
 
-  var blurred = StackBlur.imageDataRGB(this.ctx.getImageData(0,0,this.c.width,this.c.height), 0, 0, this.c.width, this.c.height, 5);
+  var blurred = StackBlur.imageDataRGB(this.ctx.getImageData(0,0,this.c.width,this.c.height), 0, 0, this.c.width, this.c.height, this.opts.blur);
 
   var threshold = this.thresholder(blurred);  
   this.tempCtx.putImageData(threshold, 0,0);
@@ -74,6 +74,7 @@ ImageParser.prototype.defaults = {
   threshold: 60,
   downscaledSize: 24,
   debug: false,
+  blur: 2,
 };
 
 ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) {

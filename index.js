@@ -30,7 +30,7 @@ function ImageParser(img, options) {
 
 	this.calculateThreshold(this.ctx.getImageData(0,0,this.c.width,this.c.height));
 
-	var blurred = StackBlur.imageDataRGB(this.ctx.getImageData(0,0,this.c.width,this.c.height), 0, 0, img.width, img.height, 2);
+	var blurred = StackBlur.imageDataRGB(this.ctx.getImageData(0,0,this.c.width,this.c.height), 0, 0, img.width, img.height, this.opts.blur);
 	blurred = this.ctx.getImageData(0,0,this.c.width,this.c.height);
 	var threshold = this.thresholder(blurred);	
 
@@ -71,6 +71,7 @@ ImageParser.prototype.defaults = {
   threshold: 150,
   downscaledSize: 24,
   debug: false,
+  blur: 2,
 };
 
 ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) {
@@ -358,9 +359,9 @@ function train() {
 					console.log("=========================================\n");
 
 
-					var net = new brain.NeuralNetwork({hiddenLayers: [128, 128]});
+					var net = new brain.NeuralNetwork({hiddenLayers: [72, 72]});
 					  net.train(trainingData, {
-					      errorThresh: 0.0005,  // error threshold to reach 0.0001
+					      errorThresh: 0.0001,  // error threshold to reach 0.0001
 					      iterations: 2000,
 					      learningRate: 0.3,   // maximum training iterations
 					      log: true,           // console.log() progress periodically

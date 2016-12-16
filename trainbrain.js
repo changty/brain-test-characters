@@ -45,7 +45,9 @@ function ImageParser(img, options) {
 
   this.calculateThreshold(this.ctx.getImageData(0,0,this.c.width,this.c.height));
 
-  var threshold = this.thresholder(this.ctx.getImageData(0,0,this.c.width,this.c.height));  
+  var blurred = StackBlur.imageDataRGB(this.ctx.getImageData(0,0,this.c.width,this.c.height), 0, 0, this.c.width, this.c.height, 5);
+
+  var threshold = this.thresholder(blurred);  
   this.tempCtx.putImageData(threshold, 0,0);
 
   // console.log("treshold", threshold);
@@ -57,7 +59,7 @@ function ImageParser(img, options) {
   // console.log("extract", extract);
   var downscale = this.downscale(extract); 
   for(var i=0; i<downscale.length; i++) {
-    this.tempCtx.putImageData(downscale[i], i*16,0);
+    this.tempCtx.putImageData(downscale[i], i*24,0);
   }
 
 
@@ -152,8 +154,8 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
     if (!foundLetterInColumn && foundLetter) {
       // get letter pixels
       // if(currentLetter.maxX-currentLetter.minX > 0 && currentLetter.maxY-currentLetter.minY > 0) {
-        console.log("pixels in letter", pixelsInLetter);
-        if (pixelsInLetter > 100) {
+        // console.log("pixels in letter", pixelsInLetter);
+        if (pixelsInLetter > 70) {
         letters.push(this.ctx.getImageData(
           currentLetter.minX,
           currentLetter.minY,
@@ -224,63 +226,84 @@ ImageParser.prototype.downscale = function Downscale(imgDatas){
 $('body').append('<img src="imgs/1_1.jpg" width="50"/>');
 
 // not trained with
-$('body').append('<img src="imgs/0_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/1_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/2_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/3_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/4_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/5_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/7_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/8_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/10_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/9_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/0_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/1_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/2_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/3_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/4_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/5_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/7_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/8_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/10_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/9_testi1.jpg" width="50"/>');
 
-$('body').append('<img src="imgs/0_testi2.jpg" width="50"/>');
-$('body').append('<img src="imgs/1_testi2.jpg" width="50"/>');
-$('body').append('<img src="imgs/2_testi2.jpg" width="50"/>');
-$('body').append('<img src="imgs/3_testi2.jpg" width="50"/>');
-$('body').append('<img src="imgs/4_testi2.jpg" width="50"/>');
-$('body').append('<img src="imgs/5_testi2.jpg" width="50"/>');
-$('body').append('<img src="imgs/7_testi2.jpg" width="50"/>');
-$('body').append('<img src="imgs/8_testi2.jpg" width="50"/>');
-$('body').append('<img src="imgs/10_testi2.jpg" width="50"/>');
-$('body').append('<img src="imgs/9_testi2.jpg" width="50"/>');
+// $('body').append('<img src="imgs/0_testi2.jpg" width="50"/>');
+// $('body').append('<img src="imgs/1_testi2.jpg" width="50"/>');
+// $('body').append('<img src="imgs/2_testi2.jpg" width="50"/>');
+// $('body').append('<img src="imgs/3_testi2.jpg" width="50"/>');
+// $('body').append('<img src="imgs/4_testi2.jpg" width="50"/>');
+// $('body').append('<img src="imgs/5_testi2.jpg" width="50"/>');
+// $('body').append('<img src="imgs/7_testi2.jpg" width="50"/>');
+// $('body').append('<img src="imgs/8_testi2.jpg" width="50"/>');
+// $('body').append('<img src="imgs/10_testi2.jpg" width="50"/>');
+// $('body').append('<img src="imgs/9_testi2.jpg" width="50"/>');
 
-$('body').append('<img src="imgs/1_testi3.jpg" width="50"/>');
-$('body').append('<img src="imgs/1_testi4.jpg" width="50"/>');
+// $('body').append('<img src="imgs/1_testi3.jpg" width="50"/>');
+// $('body').append('<img src="imgs/1_testi4.jpg" width="50"/>');
 
-$('body').append('<img src="imgs/9_7.jpg" width="50"/>');
-$('body').append('<img src="imgs/1_14.jpg" width="50"/>');
-$('body').append('<img src="imgs/0_7.jpg" width="50"/>');
+// $('body').append('<img src="imgs/9_7.jpg" width="50"/>');
+// $('body').append('<img src="imgs/1_14.jpg" width="50"/>');
+// $('body').append('<img src="imgs/0_7.jpg" width="50"/>');
 
-$('body').append('<img src="imgs/t_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/r_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/7_testi7.jpg" width="50"/>');
-$('body').append('<img src="imgs/+_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/ö_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/b_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/a_testi1.jpg" width="50"/>');
-$('body').append('<img src="imgs/b_testi2.jpg" width="50"/>');
-$('body').append('<img src="imgs/b_testi3.jpg" width="50"/>');
+// $('body').append('<img src="imgs/t_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/r_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/7_testi7.jpg" width="50"/>');
+// $('body').append('<img src="imgs/+_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/ö_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/b_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/a_testi1.jpg" width="50"/>');
+// $('body').append('<img src="imgs/b_testi2.jpg" width="50"/>');
+// $('body').append('<img src="imgs/b_testi3.jpg" width="50"/>');
 
-$('body').append('<img src="imgs/8_testi3.jpg" width="50"/>');
-$('body').append('<img src="imgs/8_testi4.jpg" width="50"/>');
-$('body').append('<img src="imgs/8_testi5.jpg" width="50"/>');
+// $('body').append('<img src="imgs/8_testi3.jpg" width="50"/>');
+// $('body').append('<img src="imgs/8_testi4.jpg" width="50"/>');
+// $('body').append('<img src="imgs/8_testi5.jpg" width="50"/>');
 
-$('body').append('<img src="imgs/10_4.jpg" width="50"/>');
-$('body').append('<img src="imgs/9_4.jpg" width="50"/>');
-$('body').append('<img src="imgs/7_4.jpg" width="50"/>');
-$('body').append('<img src="imgs/6_3.jpg" width="50"/>');
-$('body').append('<img src="imgs/5_4.jpg" width="50"/>');
-$('body').append('<img src="imgs/0_4.jpg" width="50"/>');
-$('body').append('<img src="imgs/0_3.jpg" width="50"/>');
-$('body').append('<img src="imgs/0_5.jpg" width="50"/>');
-$('body').append('<img src="imgs/2_3.jpg" width="50"/>');
-$('body').append('<img src="imgs/3_4.jpg" width="50"/>');
-$('body').append('<img src="imgs/5_4.jpg" width="50"/>');
-$('body').append('<img src="imgs/4_3.jpg" width="50"/>');
+// $('body').append('<img src="imgs/10_4.jpg" width="50"/>');
+// $('body').append('<img src="imgs/9_4.jpg" width="50"/>');
+// $('body').append('<img src="imgs/7_4.jpg" width="50"/>');
+// $('body').append('<img src="imgs/6_3.jpg" width="50"/>');
+// $('body').append('<img src="imgs/5_4.jpg" width="50"/>');
+// $('body').append('<img src="imgs/0_4.jpg" width="50"/>');
+// $('body').append('<img src="imgs/0_3.jpg" width="50"/>');
+// $('body').append('<img src="imgs/0_5.jpg" width="50"/>');
+// $('body').append('<img src="imgs/2_3.jpg" width="50"/>');
+// $('body').append('<img src="imgs/3_4.jpg" width="50"/>');
+// $('body').append('<img src="imgs/5_4.jpg" width="50"/>');
+// $('body').append('<img src="imgs/4_3.jpg" width="50"/>');
 
 $('body').append('<img src="imgs/discarded/2_3.jpg" width="50"/>');
+$('body').append('<img src="imgs/1_font2.jpg" width="50"/>');
+
+$('body').append('<img src="imgs/not_trained/ABCDEFGHIJKLMN_not_tested2.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/ABCDEFGHIJKLMN_not_tested3.jpg" width="150"/>');
+$('body').append('<img src="imgs/not_trained/ABCDEFGHIJKLMN_not_tested4.jpg" width="150"/>');
+$('body').append('<img src="imgs/not_trained/ABCDEFGHIJKLMN_not_tested5.jpg" width="150"/>');
+
+
+$('body').append('<img src="imgs/not_trained/OPQRSTUVWXYZÖÄÅ_not_tested2.jpg" width="150"/>');
+$('body').append('<img src="imgs/not_trained/OPQRSTUVWXYZÖÄÅ_not_tested3.jpg" width="150"/>');
+$('body').append('<img src="imgs/not_trained/OPQRSTUVWXYZÖÄÅ_not_tested4.jpg" width="150"/>');
+$('body').append('<img src="imgs/not_trained/OPQRSTUVWXYZÖÄÅ_not_tested5.jpg" width="150"/>');
+
+
+$('body').append('<img src="imgs/not_trained/123456789+-_not_tested3.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/123456789+-_not_tested4.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/123456789+-_not_tested5.jpg" width="50"/>');
+
+$('body').append('<img src="imgs/not_trained/10_not_tested2.jpg" width="50"/>');
+$('body').append('<img src="imgs/not_trained/8_not_tested2.jpg" width="50"/>');
+
 
 
 

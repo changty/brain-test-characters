@@ -2,6 +2,9 @@ var brain = require('brain');
 var Canvas = require('canvas');
 var Image = Canvas.Image;
 var ImageData = Canvas.ImageData;
+
+var StackBlur = require('stackblur-canvas');
+
 var fs = require('fs');
 
 function ImageParser(img, options) {
@@ -27,7 +30,9 @@ function ImageParser(img, options) {
 
 	this.calculateThreshold(this.ctx.getImageData(0,0,this.c.width,this.c.height));
 
-	var threshold = this.thresholder(this.ctx.getImageData(0,0,this.c.width,this.c.height));	
+	var blurred = StackBlur.imageDataRGB(this.ctx.getImageData(0,0,this.c.width,this.c.height), 0, 0, img.width, img.height, 2);
+	blurred = this.ctx.getImageData(0,0,this.c.width,this.c.height);
+	var threshold = this.thresholder(blurred);	
 
 	if(this.opts.debug) {
 		this.tempCtx.putImageData(threshold, 0,0);
@@ -45,7 +50,7 @@ function ImageParser(img, options) {
 
 	if(this.opts.debug) {
 		for(var i=0; i<downscale.length; i++) {
-			this.tempCtx.putImageData(downscale[i], i*16,0);
+			this.tempCtx.putImageData(downscale[i], i*24,0);
 		}
 
 		out = fs.createWriteStream(__dirname + '/output/' + this.opts.name + '.png');
@@ -145,8 +150,8 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
       if (!foundLetterInColumn && foundLetter) {
         // get letter pixels
         // if(currentLetter.maxX-currentLetter.minX > 0 && currentLetter.maxY-currentLetter.minY > 0) {
-          console.log("pixels in letter", pixelsInLetter);
-          if (pixelsInLetter > 100) {
+          // console.log("pixels in letter", pixelsInLetter);
+          if (pixelsInLetter > 70) {
           letters.push(this.ctx.getImageData(
             currentLetter.minX,
             currentLetter.minY,
@@ -217,18 +222,67 @@ function parseFileName(file) {
 	return file.substring(0, dash); 
 }
 
-function test(filename) {
-	fs.readFile('./imgs/' + filename, function(err, data) {
-		console.log("Testing with...", filename);
-		if(err) throw err;
+function test() {
+	const testFolder = './imgs/not_trained/'; 
+	var testedCharacters = 0; 
+	var errors = 0; 
+	var corrects = 0; 
+	var fileCount = 0;; 
 
-		var img = new Image(); 
-		img.src = data; 
+	fs.readdir(testFolder, (err, files) => {
+		if(err) throw err; 
 
-		var d = new ImageParser(img, {debug: true});
-		// console.log(d);
-		guessImageDatas(d);
+		// count jpgs 
+		for(var i=0; i<files.length; i++) {
+			if(files[i].indexOf('.jpg') !== -1) {
+				fileCount++;
+			}
+		}
+
+		files.forEach(file => {
+			fs.readFile(testFolder + file, function(err, data) {
+				if(file.indexOf('.jpg') === -1) return; 
+
+				console.log("Testing with...", file);
+				if(err) throw err;
+
+				var img = new Image(); 
+				img.src = data; 
+
+				var answer = parseFileName(file).split("");
+
+				var d = new ImageParser(img, {debug: true});
+				// console.log(d);
+				var tested = guessImageDatas(d);
+				testedCharacters += tested.length; 
+
+				for(var i=0; i<answer.length; i++) {
+					if(answer[i] != tested[i]) {
+						errors++;
+					}
+					else {
+						corrects++; 
+					}
+				}
+
+				fileCount--; 
+
+				if(fileCount === 0) {
+					console.log("\nTesting done!");
+					console.log("=========================\n");
+					console.log("Characters:\t", testedCharacters);
+					console.log("Correct:\t", corrects);
+					console.log("Errors:\t\t", errors);
+					console.log("Error rate:\t", (errors/testedCharacters), "\n");
+					console.log("=========================\n");
+				}
+			});
+
+
+		});
 	});
+
+
 }
 
 function train() {
@@ -256,7 +310,7 @@ function train() {
 				var img = new Image(); 
 				img.src = data; 
 
-				var d = new ImageParser(img, {debug: true, name: file});
+				var d = new ImageParser(img, {debug: false, name: file});
 
 				var answer = parseFileName(file);
 
@@ -286,8 +340,8 @@ function train() {
 				if(fileCount === 0) {
 					var net = new brain.NeuralNetwork({hiddenLayers: [128, 128]});
 					  net.train(trainingData, {
-					      errorThresh: 0.00022,  // error threshold to reach
-					      iterations: 20000,
+					      errorThresh: 0.0005,  // error threshold to reach 0.0001
+					      iterations: 2000,
 					      learningRate: 0.3,   // maximum training iterations
 					      log: true,           // console.log() progress periodically
 					      logPeriod: 10       // number of iterations between logging
@@ -352,12 +406,14 @@ if(process.argv[2] == 'train') {
 }
 
 if(process.argv[2] == 'test') {
-	if(!process.argv[3]) {
-		console.log("File name missing. Give me a file name from ./imgs/");
-	}
-	else {
-		test(process.argv[3]); 
-	}
+	// if(!process.argv[3]) {
+	// 	console.log("File name missing. Give me a file name from ./imgs/");
+	// }
+	// else {
+	// 	test(process.argv[3]); 
+	// }
+
+	test();
 }
 
 if(process.argv[2] == 'help' || process.argv[2] == '-h' || process.argv[2] == '--help') {

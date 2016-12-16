@@ -40,11 +40,22 @@ Trained network can be found from **output/** as **trained_network_function** an
 
 The trained_network_function can be included to any site and run independently. See **trainbrain.js** for example.
 
-If you want to see, what the computer sees with out training, you can run: 
+Run test using following command: 
 ```
-node index.js test A_testimage.jpg
+node index.js test 
 ```
-Test script will save the filtered image to **output/**. 
+Test will print following output
+```
+Testing done!
+=========================
+
+Characters:	 164
+Correct:	 143
+Errors:		 20
+Error rate:	 0.12195121951219512 
+
+=========================
+```
 
 ## Seeing results
 You can use the **index.html** and **trainbrain.js** for testing, how ever, you need to have a HTTP-server to serve needed fiels. 

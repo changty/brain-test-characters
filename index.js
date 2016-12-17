@@ -223,7 +223,7 @@ function parseFileName(file) {
 	return file.substring(0, dash); 
 }
 
-function test() {
+function test(allowed) {
 	const testFolder = './imgs/not_trained/'; 
 	var testedCharacters = 0; 
 	var errors = 0; 
@@ -241,6 +241,22 @@ function test() {
 		}
 
 		files.forEach(file => {
+			// if training has restrictions
+			if(allowed) {
+				var ans = parseFileName(file).split(""); 
+				var isAllowed = true;
+				for(var i=0;i<ans.length;i++) {
+					if(allowed.indexOf(ans[i]) === -1) {
+						isAllowed = false; 
+						fileCount--;
+						break; 
+					}
+				}
+				if(!isAllowed) {
+					return;
+				}
+			}
+
 			fs.readFile(testFolder + file, function(err, data) {
 				if(file.indexOf('.jpg') === -1) return; 
 
@@ -251,6 +267,7 @@ function test() {
 				img.src = data; 
 
 				var answer = parseFileName(file).split("");
+
 
 				var d = new ImageParser(img, {debug: true});
 				// console.log(d);
@@ -287,7 +304,7 @@ function test() {
 
 }
 
-function train() {
+function train(allowed) {
 	const inputFolder = './imgs/';
 	var fileCount = 0; 
 	var trainingData = [];
@@ -301,8 +318,26 @@ function train() {
 				fileCount++;
 			}
 		}
-		
+	
+
 		files.forEach(file => {
+			// if training has restrictions
+			if(allowed) {
+				var ans = parseFileName(file).split(""); 
+				var isAllowed = true;
+				for(var i=0;i<ans.length;i++) {
+					if(allowed.indexOf(ans[i]) === -1) {
+						isAllowed = false; 
+						fileCount--;
+						break; 
+					}
+				}
+				if(!isAllowed) {
+					return;
+				}
+			}
+
+
 			// console.log(file);
 			fs.readFile(inputFolder + file, function(err, data) {
 				if(file.indexOf('.jpg') === -1) return; 
@@ -324,7 +359,7 @@ function train() {
 				    var outputObj = {};
 
 					outputObj[answer.substring(index, index+1)] = 1;				    	
-				    
+
 				    console.log(outputObj);
 
 				    if(!testedChars[answer.substring(index, index+1)]){
@@ -359,9 +394,9 @@ function train() {
 					console.log("=========================================\n");
 
 
-					var net = new brain.NeuralNetwork({hiddenLayers: [72, 72]});
+					var net = new brain.NeuralNetwork({hiddenLayers: [72]});
 					  net.train(trainingData, {
-					      errorThresh: 0.0001,  // error threshold to reach 0.0001
+					      errorThresh: 0.00005,  // error threshold to reach 0.0001
 					      iterations: 2000,
 					      learningRate: 0.3,   // maximum training iterations
 					      log: true,           // console.log() progress periodically
@@ -422,19 +457,24 @@ function guessImageDatas(imgDatas){
 
 
 if(process.argv[2] == 'train') {
-	console.log("Training brains from imgs-folder"); 
-	train(); 
+	console.log("Training brains from imgs-folder");
+	if(process.argv[3]) {
+		var allowed = process.argv[3]; 
+		train(allowed);
+	} 
+	else {
+		train(); 
+	}
 }
 
 if(process.argv[2] == 'test') {
-	// if(!process.argv[3]) {
-	// 	console.log("File name missing. Give me a file name from ./imgs/");
-	// }
-	// else {
-	// 	test(process.argv[3]); 
-	// }
-
-	test();
+	if(process.argv[3]) {
+		var allowed = process.argv[3]; 
+		test(allowed);
+	} 
+	else {
+		test(); 
+	}
 }
 
 if(process.argv[2] == 'help' || process.argv[2] == '-h' || process.argv[2] == '--help') {

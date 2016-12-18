@@ -235,7 +235,7 @@ function test(allowed) {
 
 		// count jpgs 
 		for(var i=0; i<files.length; i++) {
-			if(files[i].indexOf('.jpg') !== -1) {
+			if(files[i].indexOf('.jpg') !== -1 || files[i].indexOf('.png') !== -1) {
 				fileCount++;
 			}
 		}
@@ -258,7 +258,7 @@ function test(allowed) {
 			}
 
 			fs.readFile(testFolder + file, function(err, data) {
-				if(file.indexOf('.jpg') === -1) return; 
+				if(file.indexOf('.jpg') === -1 && file.indexOf('.png') === -1) return; 
 
 				console.log("Testing with...", file);
 				if(err) throw err;
@@ -314,7 +314,7 @@ function train(allowed) {
 
 		// count jpgs 
 		for(var i=0; i<files.length; i++) {
-			if(files[i].indexOf('.jpg') !== -1) {
+			if(files[i].indexOf('.jpg') !== -1 || files[i].indexOf('.png') !== -1) {
 				fileCount++;
 			}
 		}
@@ -340,7 +340,7 @@ function train(allowed) {
 
 			// console.log(file);
 			fs.readFile(inputFolder + file, function(err, data) {
-				if(file.indexOf('.jpg') === -1) return; 
+				if(file.indexOf('.jpg') === -1 && file.indexOf('.png') === -1) return; 
 
 				console.log("loading...", file);
 				if(err) throw err;
@@ -394,10 +394,10 @@ function train(allowed) {
 					console.log("=========================================\n");
 
 
-					var net = new brain.NeuralNetwork({hiddenLayers: [72]});
+					var net = new brain.NeuralNetwork({hiddenLayers: [128,128]});
 					  net.train(trainingData, {
 					      errorThresh: 0.00005,  // error threshold to reach 0.0001
-					      iterations: 2000,
+					      iterations: 5000,
 					      learningRate: 0.3,   // maximum training iterations
 					      log: true,           // console.log() progress periodically
 					      logPeriod: 10       // number of iterations between logging

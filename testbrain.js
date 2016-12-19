@@ -33,6 +33,8 @@ $('body').append('<img src="imgs/not_trained/123456789+-_not_tested10a.jpg" widt
 $('body').append('<img src="imgs/not_trained/123456789+-_not_tested10b.jpg" width="50"/>');
 $('body').append('<img src="imgs/not_trained/123456789+-_not_tested10f.jpg" width="50"/>');
 $('body').append('<img src="imgs/1_new2.jpg" width="50"/>');
+$('body').append('<img src="imgs/raw/testi1.jpg" width="50"/>');
+$('body').append('<img src="imgs/raw/testi2.jpg" width="50"/>');
 
 
 

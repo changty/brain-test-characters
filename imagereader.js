@@ -76,6 +76,7 @@ ImageParser.prototype.defaults = {
   downscaledSize: 24,
   debug: false,
   blur: 2,
+  chars: 0,
 };
 
 ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) {
@@ -128,9 +129,12 @@ ImageParser.prototype.thresholder = function Threshold(imgData){
 };
 
 ImageParser.prototype.extract = function ExtractLetters(imgData){
+  var self = this; 
+
   this.ctx.putImageData(imgData,0,0); // for easy cropping
   var letters = [];
   
+  var letterRaw = []; 
   var currentLetter = {};
   var foundLetter = false;
   var pixelsInLetter = 0; 
@@ -164,6 +168,8 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
           currentLetter.maxX - currentLetter.minX,
           currentLetter.maxY - currentLetter.minY
         ));
+
+        letterRaw.push(currentLetter);
       }      
 
       
@@ -175,6 +181,36 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
     else {
 
     }
+  }
+
+  if(self.opts.chars === 1) {
+    var maxX = -1; 
+    var maxY = -1; 
+    var minX = Infinity; 
+    var minY = Infinity; 
+
+    for(var i=0; i<letterRaw.length; i++) {
+      var l = letterRaw[i]; 
+
+      if(l.minX < minX) {
+        minX = l.minX; 
+      }
+
+      if(l.minY < minY) {
+        minY = l.minY; 
+      }
+
+      if(l.maxX > maxX) {
+        maxX = l.maxX; 
+      }
+
+      if(l.maxY > maxY) {
+        maxY = l.maxY; 
+      }
+    }
+
+    letters = []; 
+    letters.push(this.ctx.getImageData(minX, minY, maxX-minX, maxY-minY));
   }
   
   return letters;

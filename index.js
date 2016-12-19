@@ -101,7 +101,10 @@ ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) 
   if(brightness < 70) {
     birghtness = brightness/2;
   }
+
   this.opts.threshold = brightness; 
+  this.opts.threshold = 90;
+
   console.log("threshold: ", this.opts.threshold);
 
 }
@@ -269,7 +272,7 @@ function test(allowed) {
 				var answer = parseFileName(file).split("");
 
 
-				var d = new ImageParser(img, {debug: true});
+				var d = new ImageParser(img, {debug: false, name: file, downscaledSize: 16, blur: 2, chars: 1});
 				// console.log(d);
 				var tested = guessImageDatas(d);
 				testedCharacters += tested.length; 
@@ -348,7 +351,7 @@ function train(allowed) {
 				var img = new Image(); 
 				img.src = data; 
 
-				var d = new ImageParser(img, {debug: false, name: file});
+				var d = new ImageParser(img, {debug: false, name: file, downscaledSize: 16, blur: 2, chars: 1});
 
 				var answer = parseFileName(file);
 

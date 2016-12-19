@@ -97,16 +97,17 @@ ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) 
 
   var brightness = Math.floor(colorSum / (self.c.width*self.c.height));
   console.log("Brightness", brightness);
-  if(brightness > 150) {
+  if(brightness > 105) { // was 150
     brightness = brightness/1.2;
   }
-  if(brightness < 105) {
+  if(brightness <= 105) {
     brightness = brightness/1.5; 
   }
   if(brightness < 70) {
     birghtness = brightness/2;
   }
   this.opts.threshold = brightness; 
+  this.opts.threshold = 90;
   console.log("threshold: ", this.opts.threshold);
 
 }

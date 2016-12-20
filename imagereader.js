@@ -107,7 +107,9 @@ ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) 
     birghtness = brightness/2;
   }
   this.opts.threshold = brightness; 
-  this.opts.threshold = 90;
+
+  // only for spesific case
+  this.opts.threshold = 200;
   console.log("threshold: ", this.opts.threshold);
 
 }
@@ -184,38 +186,41 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
     }
   }
 
-  if(self.opts.chars === 1) {
-    var maxX = -1; 
-    var maxY = -1; 
-    var minX = Infinity; 
-    var minY = Infinity; 
+  if(letters.length > 0) {
+    if(self.opts.chars === 1) {
+      var maxX = -1; 
+      var maxY = -1; 
+      var minX = Infinity; 
+      var minY = Infinity; 
 
-    for(var i=0; i<letterRaw.length; i++) {
-      var l = letterRaw[i]; 
+      for(var i=0; i<letterRaw.length; i++) {
+        var l = letterRaw[i]; 
 
-      if(l.minX < minX) {
-        minX = l.minX; 
+        if(l.minX < minX) {
+          minX = l.minX; 
+        }
+
+        if(l.minY < minY) {
+          minY = l.minY; 
+        }
+
+        if(l.maxX > maxX) {
+          maxX = l.maxX; 
+        }
+
+        if(l.maxY > maxY) {
+          maxY = l.maxY; 
+        }
       }
 
-      if(l.minY < minY) {
-        minY = l.minY; 
-      }
-
-      if(l.maxX > maxX) {
-        maxX = l.maxX; 
-      }
-
-      if(l.maxY > maxY) {
-        maxY = l.maxY; 
-      }
+      letters = []; 
+      letters.push(self.ctx.getImageData(minX, minY, maxX-minX, maxY-minY));
     }
-
-    letters = []; 
-    letters.push(this.ctx.getImageData(minX, minY, maxX-minX, maxY-minY));
   }
   
   return letters;
 };
+
 
 ImageParser.prototype.formatForBrain = function FormatForBrain(imgData){
   var outp = [];

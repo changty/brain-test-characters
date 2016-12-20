@@ -103,7 +103,8 @@ ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) 
   }
 
   this.opts.threshold = brightness; 
-  this.opts.threshold = 90;
+  // only used for spesific case
+  this.opts.threshold = 200;
 
   console.log("threshold: ", this.opts.threshold);
 
@@ -125,9 +126,12 @@ ImageParser.prototype.thresholder = function Threshold(imgData){
 };
 
 ImageParser.prototype.extract = function ExtractLetters(imgData){
+  var self = this; 
+
   this.ctx.putImageData(imgData,0,0); // for easy cropping
   var letters = [];
   
+  var letterRaw = []; 
   var currentLetter = {};
   var foundLetter = false;
   var pixelsInLetter = 0; 
@@ -139,8 +143,7 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
       var pixIndex = (y*imgData.width+x)*4;
       if (imgData.data[pixIndex] === 255) { // if we're dealing with a letter pixel
         foundLetterInColumn = foundLetter = true;
-    	pixelsInLetter++;
-
+      pixelsInLetter++; 
         // set data for this letter
         currentLetter.minX = Math.min(x, currentLetter.minX || Infinity);
         currentLetter.maxX = Math.max(x, currentLetter.maxX || -1);
@@ -150,33 +153,68 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
 
     }
 
-      // if we've reached the end of this letter, push it to letters array
-      if (!foundLetterInColumn && foundLetter) {
-        // get letter pixels
-        // if(currentLetter.maxX-currentLetter.minX > 0 && currentLetter.maxY-currentLetter.minY > 0) {
-          // console.log("pixels in letter", pixelsInLetter);
-          if (pixelsInLetter > 70) {
-          letters.push(this.ctx.getImageData(
-            currentLetter.minX,
-            currentLetter.minY,
-            currentLetter.maxX - currentLetter.minX,
-            currentLetter.maxY - currentLetter.minY
-          ));
-        }      
+    // if we've reached the end of this letter, push it to letters array
+    if (!foundLetterInColumn && foundLetter) {
+      // get letter pixels
+      // if(currentLetter.maxX-currentLetter.minX > 0 && currentLetter.maxY-currentLetter.minY > 0) {
+        // console.log("pixels in letter", pixelsInLetter);
+        if (pixelsInLetter > 70) {
+        letters.push(this.ctx.getImageData(
+          currentLetter.minX,
+          currentLetter.minY,
+          currentLetter.maxX - currentLetter.minX,
+          currentLetter.maxY - currentLetter.minY
+        ));
 
-        
-        // reset
-        foundLetter = foundLetterInColumn = false;
-        currentLetter = {};
-        pixelsInLetter = 0; 
-      }
-      else {
+        letterRaw.push(currentLetter);
+      }      
 
-      }
+      
+      // reset
+      foundLetter = foundLetterInColumn = false;
+      currentLetter = {};
+      pixelsInLetter = 0; 
     }
-    
-    return letters;
+    else {
+
+    }
+  }
+
+  if(letters.length > 0) {
+    if(self.opts.chars === 1) {
+      var maxX = -1; 
+      var maxY = -1; 
+      var minX = Infinity; 
+      var minY = Infinity; 
+
+      for(var i=0; i<letterRaw.length; i++) {
+        var l = letterRaw[i]; 
+
+        if(l.minX < minX) {
+          minX = l.minX; 
+        }
+
+        if(l.minY < minY) {
+          minY = l.minY; 
+        }
+
+        if(l.maxX > maxX) {
+          maxX = l.maxX; 
+        }
+
+        if(l.maxY > maxY) {
+          maxY = l.maxY; 
+        }
+      }
+
+      letters = []; 
+      letters.push(self.ctx.getImageData(minX, minY, maxX-minX, maxY-minY));
+    }
+  }
+  
+  return letters;
 };
+
 
 ImageParser.prototype.downscale = function Downscale(imgDatas){
   if(Array.isArray(imgDatas) && imgDatas.length === 0) {
@@ -352,8 +390,9 @@ function train(allowed) {
 				img.src = data; 
 
 				var d = new ImageParser(img, {debug: false, name: file, downscaledSize: 16, blur: 2, chars: 1});
-
 				var answer = parseFileName(file);
+
+				var onlyOneChar = true; 
 
 				// split into array of letterImg/letterString objects
 				var outp = d.map(function(imgData,index){
@@ -361,7 +400,12 @@ function train(allowed) {
 				    // `output` property must be an object
 				    var outputObj = {};
 
-					outputObj[answer.substring(index, index+1)] = 1;				    	
+				    if(onlyOneChar) {
+				    	outputObj[answer] = 1;				    	
+				    }
+				    else {
+				    	outputObj[answer.substring(index, index+1)] = 1;				    	
+				    }
 
 				    console.log(outputObj);
 
@@ -397,10 +441,10 @@ function train(allowed) {
 					console.log("=========================================\n");
 
 
-					var net = new brain.NeuralNetwork({hiddenLayers: [128,128]});
+					var net = new brain.NeuralNetwork({hiddenLayers: [16]});
 					  net.train(trainingData, {
-					      errorThresh: 0.00005,  // error threshold to reach 0.0001
-					      iterations: 5000,
+					      errorThresh: 0.000002,  // error threshold to reach 0.0001
+					      iterations: 10000,
 					      learningRate: 0.3,   // maximum training iterations
 					      log: true,           // console.log() progress periodically
 					      logPeriod: 10       // number of iterations between logging

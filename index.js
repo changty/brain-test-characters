@@ -28,10 +28,15 @@ function ImageParser(img, options) {
 	var out;
 	var stream;
 
-	this.calculateThreshold(this.ctx.getImageData(0,0,this.c.width,this.c.height));
+	var brightnessContrast = this.ctx.getImageData(0,0,this.c.width,this.c.height) ; 
+	var brightness = self.brightnessContrast(brightnessContrast, 65, 85); 
 
-	var blurred = StackBlur.imageDataRGB(this.ctx.getImageData(0,0,this.c.width,this.c.height), 0, 0, img.width, img.height, this.opts.blur);
-	blurred = this.ctx.getImageData(0,0,this.c.width,this.c.height);
+	this.tempCtx.putImageData(brightness, 0,0);
+
+	var blurred = StackBlur.imageDataRGB(brightness, 0, 0, this.c.width, this.c.height, this.opts.blur);
+
+	this.calculateThreshold(blurred);
+
 	var threshold = this.thresholder(blurred);	
 
 	if(this.opts.debug) {
@@ -104,10 +109,35 @@ ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) 
 
   this.opts.threshold = brightness; 
   // only used for spesific case
-  this.opts.threshold = 200;
-
   console.log("threshold: ", this.opts.threshold);
 
+}
+
+//brightness effect
+// imageData, brightness [0-100], contrast [0-100]
+ImageParser.prototype.brightnessContrast = function(imageData, b, c){
+  var data = imageData;//get pixel data
+  var pixels = data.data;
+  for(var i = 0; i < pixels.length; i+=4){//loop through all data
+    /*
+    pixels[i] is the red component
+    pixels[i+1] is the green component
+    pixels[i+2] is the blue component
+    pixels[i+3] is the alpha component
+    */
+    pixels[i] += b;
+    pixels[i+1] += b;
+    pixels[i+2] += b;
+
+    var brightness = (pixels[i]+pixels[i+1]+pixels[i+2])/3; //get the brightness
+    
+    pixels[i] += brightness > 127 ? c : -c;
+    pixels[i+1] += brightness > 127 ? c : -c;
+    pixels[i+2] += brightness > 127 ? c : -c;
+  }
+  data.data = pixels;
+
+  return data; 
 }
 
 // Image functions
@@ -310,7 +340,7 @@ function test(allowed) {
 				var answer = parseFileName(file).split("");
 
 
-				var d = new ImageParser(img, {debug: false, name: file, downscaledSize: 16, blur: 2, chars: 1});
+				var d = new ImageParser(img, {debug: true, name: file, downscaledSize: 16, blur: 2, chars: 1});
 				// console.log(d);
 				var tested = guessImageDatas(d);
 				testedCharacters += tested.length; 

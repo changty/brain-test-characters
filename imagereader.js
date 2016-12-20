@@ -44,15 +44,15 @@ function ImageParser(img, options) {
 
   $('body').append(this.tempCanvas);
 
-  this.calculateThreshold(this.ctx.getImageData(0,0,this.c.width,this.c.height));
-
   var brightnessContrast = this.ctx.getImageData(0,0,this.c.width,this.c.height) ; 
-  var brightness = self.brightness(brightnessContrast, 65); 
-  var contrast  = self.contrast(brightness, 85); 
+  var brightness = self.brightnessContrast(brightnessContrast, 65, 85); 
+  // var contrast  = self.contrast(brightness, 85); 
 
-  this.tempCtx.putImageData(contrast, 0,0);
+  this.tempCtx.putImageData(brightness, 0,0);
 
-  var blurred = StackBlur.imageDataRGB(contrast, 0, 0, this.c.width, this.c.height, this.opts.blur);
+  var blurred = StackBlur.imageDataRGB(brightness, 0, 0, this.c.width, this.c.height, this.opts.blur);
+
+  this.calculateThreshold(blurred);
 
   var threshold = this.thresholder(blurred);  
   this.tempCtx.putImageData(threshold, 0,0);
@@ -86,7 +86,8 @@ ImageParser.prototype.defaults = {
 };
 
 //brightness effect
-ImageParser.prototype.brightness = function(imageData, amount){
+// imageData, brightness [0-100], contrast [0-100]
+ImageParser.prototype.brightnessContrast = function(imageData, b, c){
   var data = imageData;//get pixel data
   var pixels = data.data;
   for(var i = 0; i < pixels.length; i+=4){//loop through all data
@@ -96,31 +97,15 @@ ImageParser.prototype.brightness = function(imageData, amount){
     pixels[i+2] is the blue component
     pixels[i+3] is the alpha component
     */
-    pixels[i] += amount;
-    pixels[i+1] += amount;
-    pixels[i+2] += amount;
-  }
-  data.data = pixels;
+    pixels[i] += b;
+    pixels[i+1] += b;
+    pixels[i+2] += b;
 
-  return data; 
-}
-
-//contrast effect
-ImageParser.prototype.contrast = function(imageData, amount){
-  var data = imageData; //get pixel data
-  var pixels = data.data;
-  for(var i = 0; i < pixels.length; i+=4){//loop through all data
-    /*
-    pixels[i] is the red component
-    pixels[i+1] is the green component
-    pixels[i+2] is the blue component
-    pixels[i+3] is the alpha component
-    */
     var brightness = (pixels[i]+pixels[i+1]+pixels[i+2])/3; //get the brightness
     
-    pixels[i] += brightness > 127 ? amount : -amount;
-    pixels[i+1] += brightness > 127 ? amount : -amount;
-    pixels[i+2] += brightness > 127 ? amount : -amount;
+    pixels[i] += brightness > 127 ? c : -c;
+    pixels[i+1] += brightness > 127 ? c : -c;
+    pixels[i+2] += brightness > 127 ? c : -c;
   }
   data.data = pixels;
 
@@ -158,7 +143,7 @@ ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) 
   this.opts.threshold = brightness; 
 
   // only for spesific case
-  this.opts.threshold = 200;
+  // this.opts.threshold = 200;
   console.log("threshold: ", this.opts.threshold);
 
 }

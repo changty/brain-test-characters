@@ -46,7 +46,13 @@ function ImageParser(img, options) {
 
   this.calculateThreshold(this.ctx.getImageData(0,0,this.c.width,this.c.height));
 
-  var blurred = StackBlur.imageDataRGB(this.ctx.getImageData(0,0,this.c.width,this.c.height), 0, 0, this.c.width, this.c.height, this.opts.blur);
+  var brightnessContrast = this.ctx.getImageData(0,0,this.c.width,this.c.height) ; 
+  var brightness = self.brightness(brightnessContrast, 65); 
+  var contrast  = self.contrast(brightness, 85); 
+
+  this.tempCtx.putImageData(contrast, 0,0);
+
+  var blurred = StackBlur.imageDataRGB(contrast, 0, 0, this.c.width, this.c.height, this.opts.blur);
 
   var threshold = this.thresholder(blurred);  
   this.tempCtx.putImageData(threshold, 0,0);
@@ -78,6 +84,49 @@ ImageParser.prototype.defaults = {
   blur: 2,
   chars: 0,
 };
+
+//brightness effect
+ImageParser.prototype.brightness = function(imageData, amount){
+  var data = imageData;//get pixel data
+  var pixels = data.data;
+  for(var i = 0; i < pixels.length; i+=4){//loop through all data
+    /*
+    pixels[i] is the red component
+    pixels[i+1] is the green component
+    pixels[i+2] is the blue component
+    pixels[i+3] is the alpha component
+    */
+    pixels[i] += amount;
+    pixels[i+1] += amount;
+    pixels[i+2] += amount;
+  }
+  data.data = pixels;
+
+  return data; 
+}
+
+//contrast effect
+ImageParser.prototype.contrast = function(imageData, amount){
+  var data = imageData; //get pixel data
+  var pixels = data.data;
+  for(var i = 0; i < pixels.length; i+=4){//loop through all data
+    /*
+    pixels[i] is the red component
+    pixels[i+1] is the green component
+    pixels[i+2] is the blue component
+    pixels[i+3] is the alpha component
+    */
+    var brightness = (pixels[i]+pixels[i+1]+pixels[i+2])/3; //get the brightness
+    
+    pixels[i] += brightness > 127 ? amount : -amount;
+    pixels[i+1] += brightness > 127 ? amount : -amount;
+    pixels[i+2] += brightness > 127 ? amount : -amount;
+  }
+  data.data = pixels;
+
+  return data; 
+}
+
 
 ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) {
   var self = this; 
@@ -217,7 +266,7 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
       letters.push(self.ctx.getImageData(minX, minY, maxX-minX, maxY-minY));
     }
   }
-  
+
   return letters;
 };
 

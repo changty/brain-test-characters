@@ -1,3 +1,4 @@
+
 function guessImageDatas(imgDatas){
   var outp = [];
   var minConfidence = 2; 
@@ -10,14 +11,15 @@ function guessImageDatas(imgDatas){
       if (guess[k] > max.val) {
         max = {txt: k, val: guess[k]};
       }
-      if(guess[k]<minConfidence) {
-        minConfidence = guess[k];
-      }
     }
-    
+    if(max.val < minConfidence) {
+      minConfidence = max.val;
+    }
     outp.push(max.txt);
     // console.log("most confident: ", max.txt, max.val);
   }
+  
+  return {output: outp[0], confidence: minConfidence};
 }
 
 function ImageParser(img, options) {

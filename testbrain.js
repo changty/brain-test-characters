@@ -204,6 +204,8 @@ $('body').append('<img src="imgs/3_a25.png" width="50"/>');
 $('body').append('<img src="imgs/9_aa31.png" width="50"/>');
 $('body').append('<img src="imgs/8_aa29.png" width="50"/>');
 $('body').append('<img src="imgs/10_aa08.png" width="50"/>');
+$('body').append('<img src="imgs/new/1_reference_balls.png" width="50"/>');
+
 
 
 

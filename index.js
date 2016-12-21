@@ -79,8 +79,8 @@ ImageParser.prototype.defaults = {
   downscaledSize: 24,
   debug: false,
   blur: 5,
-  brightness: 35,
-  contrast: 75,
+  brightness: 45,
+  contrast: 85,
   chars: 0,
 };
 
@@ -513,11 +513,11 @@ function train(allowed) {
 					console.log("=========================================\n");
 
 
-					var net = new brain.NeuralNetwork({hiddenLayers: [128,128]});
+					var net = new brain.NeuralNetwork({hiddenLayers: [128]});
 					  net.train(trainingData, {
-					      errorThresh: 0.00002,  // error threshold to reach 0.0001
+					      errorThresh: 0.000005,  // error threshold to reach 0.0001
 					      iterations: 25000,
-					      learningRate: 0.05,   // maximum training iterations
+					      learningRate: 0.02,   // maximum training iterations
 					      log: true,           // console.log() progress periodically
 					      logPeriod: 10       // number of iterations between logging
 					  });

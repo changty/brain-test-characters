@@ -28,16 +28,18 @@ function ImageParser(img, options) {
 	var out;
 	var stream;
 
-	var brightnessContrast = this.ctx.getImageData(0,0,this.c.width,this.c.height) ; 
-	var brightness = self.brightnessContrast(brightnessContrast, 65, 85); 
+  var blurred = StackBlur.imageDataRGB(this.ctx.getImageData(0,0,this.c.width,this.c.height), 0, 0, this.c.width, this.c.height, this.opts.blur);
+
+  var greyscale = self.greyscale(blurred);
+  // var brightnessContrast = this.ctx.getImageData(0,0,this.c.width,this.c.height) ; 
+  var brightness = self.brightnessContrast(greyscale, self.opts.brightness, self.opts.contrast); 
 
 	this.tempCtx.putImageData(brightness, 0,0);
 
-	var blurred = StackBlur.imageDataRGB(brightness, 0, 0, this.c.width, this.c.height, this.opts.blur);
 
-	this.calculateThreshold(blurred);
+	this.calculateThreshold(brightness);
 
-	var threshold = this.thresholder(blurred);	
+	var threshold = this.thresholder(brightness);	
 
 	if(this.opts.debug) {
 		this.tempCtx.putImageData(threshold, 0,0);
@@ -73,11 +75,38 @@ function ImageParser(img, options) {
 }
 
 ImageParser.prototype.defaults = {
-  threshold: 150,
+  threshold: 60,
   downscaledSize: 24,
   debug: false,
-  blur: 2,
+  blur: 5,
+  brightness: 35,
+  contrast: 75,
+  chars: 0,
 };
+
+//To greyscale
+ImageParser.prototype.greyscale = function(imageData)  {
+  var self = this; 
+
+  var px = imageData.data;
+
+  var len = px.length;
+
+  for (var i = 0; i < len; i+=4) {
+      var redPx = px[i];
+      var greenPx = px[i+1];
+      var bluePx = px[i+2];
+      var alphaPx = px[i+3];
+
+      var greyScale = redPx * .3 + greenPx * .59 + bluePx * .11;
+
+      px[i] = greyScale;
+      px[i+1] = greyScale;
+      px[i+2] = greyScale;
+  }
+
+  return imageData;
+}
 
 ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) {
   var self = this; 
@@ -97,18 +126,19 @@ ImageParser.prototype.calculateThreshold = function CalculateThreshold(imgData) 
 
   var brightness = Math.floor(colorSum / (self.c.width*self.c.height));
   console.log("Brightness", brightness);
-  if(brightness > 150) {
+  if(brightness > 105) { // was 150
     brightness = brightness/1.2;
   }
-  if(brightness < 105) {
+  if(brightness <= 105) {
     brightness = brightness/1.5; 
   }
   if(brightness < 70) {
     birghtness = brightness/2;
   }
-
   this.opts.threshold = brightness; 
-  // only used for spesific case
+
+  // only for spesific case
+  // this.opts.threshold = 200;
   console.log("threshold: ", this.opts.threshold);
 
 }
@@ -295,7 +325,8 @@ function parseFileName(file) {
 }
 
 function test(allowed) {
-	const testFolder = './imgs/not_trained/'; 
+	// const testFolder = './imgs/not_trained/'; 
+	const testFolder = './imgs/';
 	var testedCharacters = 0; 
 	var errors = 0; 
 	var corrects = 0; 
@@ -337,22 +368,33 @@ function test(allowed) {
 				var img = new Image(); 
 				img.src = data; 
 
-				var answer = parseFileName(file).split("");
-
+				// var answer = parseFileName(file).split("");
+				var answer = parseFileName(file);
 
 				var d = new ImageParser(img, {debug: true, name: file, downscaledSize: 16, blur: 2, chars: 1});
 				// console.log(d);
 				var tested = guessImageDatas(d);
 				testedCharacters += tested.length; 
 
-				for(var i=0; i<answer.length; i++) {
-					if(answer[i] != tested[i]) {
-						errors++;
-					}
-					else {
-						corrects++; 
-					}
+
+
+				if(answer != tested[0]) {
+					errors++;
+					console.log("Guess:", tested[0], "\t\t correct: ", answer[0]);
 				}
+				else {
+					corrects++;
+				}
+
+				// for(var i=0; i<answer.length; i++) {
+				// 	if(answer[i] != tested[i]) {
+				// 		errors++;
+				// 		console.log("Guess:", tested[i], "\t\t correct: ", answer[i]);
+				// 	}
+				// 	else {
+				// 		corrects++; 
+				// 	}
+				// }
 
 				fileCount--; 
 
@@ -471,11 +513,11 @@ function train(allowed) {
 					console.log("=========================================\n");
 
 
-					var net = new brain.NeuralNetwork({hiddenLayers: [16]});
+					var net = new brain.NeuralNetwork({hiddenLayers: [128,128]});
 					  net.train(trainingData, {
 					      errorThresh: 0.000002,  // error threshold to reach 0.0001
-					      iterations: 10000,
-					      learningRate: 0.3,   // maximum training iterations
+					      iterations: 25000,
+					      learningRate: 0.01,   // maximum training iterations
 					      log: true,           // console.log() progress periodically
 					      logPeriod: 10       // number of iterations between logging
 					  });

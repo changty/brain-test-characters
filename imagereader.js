@@ -44,17 +44,19 @@ function ImageParser(img, options) {
 
   $('body').append(this.tempCanvas);
 
-  var brightnessContrast = this.ctx.getImageData(0,0,this.c.width,this.c.height) ; 
-  var brightness = self.brightnessContrast(brightnessContrast, 65, 85); 
+  var blurred = StackBlur.imageDataRGB(this.ctx.getImageData(0,0,this.c.width,this.c.height), 0, 0, this.c.width, this.c.height, this.opts.blur);
+
+  var greyscale = self.greyscale(blurred);
+  // var brightnessContrast = this.ctx.getImageData(0,0,this.c.width,this.c.height) ; 
+  var brightness = self.brightnessContrast(greyscale, self.opts.brightness, self.opts.contrast); 
   // var contrast  = self.contrast(brightness, 85); 
 
   this.tempCtx.putImageData(brightness, 0,0);
 
-  var blurred = StackBlur.imageDataRGB(brightness, 0, 0, this.c.width, this.c.height, this.opts.blur);
 
-  this.calculateThreshold(blurred);
+  this.calculateThreshold(brightness);
 
-  var threshold = this.thresholder(blurred);  
+  var threshold = this.thresholder(brightness);  
   this.tempCtx.putImageData(threshold, 0,0);
 
   // console.log("treshold", threshold);
@@ -82,8 +84,35 @@ ImageParser.prototype.defaults = {
   downscaledSize: 24,
   debug: false,
   blur: 2,
+  brightness: 35,
+  contrast: 75,
   chars: 0,
 };
+
+
+//To greyscale
+ImageParser.prototype.greyscale = function(imageData)  {
+  var self = this; 
+
+  var px = imageData.data;
+
+  var len = px.length;
+
+  for (var i = 0; i < len; i+=4) {
+      var redPx = px[i];
+      var greenPx = px[i+1];
+      var bluePx = px[i+2];
+      var alphaPx = px[i+3];
+
+      var greyScale = redPx * .3 + greenPx * .59 + bluePx * .11;
+
+      px[i] = greyScale;
+      px[i+1] = greyScale;
+      px[i+2] = greyScale;
+  }
+
+  return imageData;
+}
 
 //brightness effect
 // imageData, brightness [0-100], contrast [0-100]

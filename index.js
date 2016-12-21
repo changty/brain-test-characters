@@ -218,7 +218,7 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
       // get letter pixels
       // if(currentLetter.maxX-currentLetter.minX > 0 && currentLetter.maxY-currentLetter.minY > 0) {
         // console.log("pixels in letter", pixelsInLetter);
-        if (pixelsInLetter > 70) {
+        if (pixelsInLetter > 200) {
         letters.push(this.ctx.getImageData(
           currentLetter.minX,
           currentLetter.minY,
@@ -515,9 +515,9 @@ function train(allowed) {
 
 					var net = new brain.NeuralNetwork({hiddenLayers: [128,128]});
 					  net.train(trainingData, {
-					      errorThresh: 0.000002,  // error threshold to reach 0.0001
+					      errorThresh: 0.00002,  // error threshold to reach 0.0001
 					      iterations: 25000,
-					      learningRate: 0.01,   // maximum training iterations
+					      learningRate: 0.05,   // maximum training iterations
 					      log: true,           // console.log() progress periodically
 					      logPeriod: 10       // number of iterations between logging
 					  });

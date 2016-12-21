@@ -226,8 +226,7 @@ ImageParser.prototype.extract = function ExtractLetters(imgData){
     if (!foundLetterInColumn && foundLetter) {
       // get letter pixels
       // if(currentLetter.maxX-currentLetter.minX > 0 && currentLetter.maxY-currentLetter.minY > 0) {
-        // console.log("pixels in letter", pixelsInLetter);
-        if (pixelsInLetter > 70) {
+        if (pixelsInLetter > 200) {
         letters.push(this.ctx.getImageData(
           currentLetter.minX,
           currentLetter.minY,

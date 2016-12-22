@@ -10,6 +10,9 @@
     "type": "git",
     "url": "git+https://github.com/changty/brain-test-characters.git"
   },
+  "devDependencies": {
+    "browserify": "latest",
+  },
   "author": "",
   "license": "ISC",
   "bugs": {

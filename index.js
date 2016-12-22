@@ -461,7 +461,7 @@ function train(allowed) {
 				var img = new Image(); 
 				img.src = data; 
 
-				var d = new ImageParser(img, {debug: false, name: file, downscaledSize: 16, blur: 2, chars: 1});
+				var d = new ImageParser(img, {debug: false, name: file, downscaledSize: 24, blur: 2, chars: 1});
 				var answer = parseFileName(file);
 
 				var onlyOneChar = true; 
@@ -513,9 +513,9 @@ function train(allowed) {
 					console.log("=========================================\n");
 
 
-					var net = new brain.NeuralNetwork({hiddenLayers: [128]});
+					var net = new brain.NeuralNetwork({hiddenLayers: [128, 128]});
 					  net.train(trainingData, {
-					      errorThresh: 0.000005,  // error threshold to reach 0.0001
+					      errorThresh: 0.000001,  // error threshold to reach 0.0001
 					      iterations: 25000,
 					      learningRate: 0.02,   // maximum training iterations
 					      log: true,           // console.log() progress periodically

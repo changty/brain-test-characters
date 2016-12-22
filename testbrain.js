@@ -217,7 +217,7 @@ $(document).ready(function(e) {
     imgs[i].addEventListener("click", function(){
       // console.log(this);
 
-        var data = new ImageParser(this, {debug: false, downscaledSize: 16, blur: 2, chars: 1});
+        var data = new ImageParser(this, {debug: false, downscaledSize: 24, blur: 2, chars: 1});
         console.log(guessImageDatas(data));
 
     });

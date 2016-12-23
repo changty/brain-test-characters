@@ -193,9 +193,9 @@ function train(allowed) {
 
 					var net = new brain.NeuralNetwork({hiddenLayers: [128, 128]});
 					  net.train(trainingData, {
-					      errorThresh: 0.0001,  // error threshold to reach 0.0001
+					      errorThresh: 0.00001,  // error threshold to reach 0.0001
 					      iterations: 25000,
-					      learningRate: 0.1,   // maximum training iterations
+					      learningRate: 0.02,   // maximum training iterations
 					      log: true,           // console.log() progress periodically
 					      logPeriod: 10       // number of iterations between logging
 					  });

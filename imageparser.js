@@ -9,6 +9,7 @@
     exports.parse = function(image, opts) {
         var defaults = {
             downscaledSize: 24,
+            // a canvas element
             debug: false,
             blur: 2,
             brightness: 45,
@@ -37,7 +38,6 @@
         ctx.drawImage(img, 0, 0);
         var imageData = ctx.getImageData(0,0, c.width,c.height);
 
-
         // blur, greyscale, brightness/contrast, getTreshold, treshold, extract, downscale, forBrain
         imageData =  StackBlur.imageDataRGB(imageData, 0, 0, c.width, c.height, options.blur);
         imageData = greyscale(imageData);
@@ -46,8 +46,13 @@
         options.threshold = calculateThreshold(imageData); 
 
         imageData = thresholder(imageData, options.threshold);
-        imageData = extract(imageData, options.chars); // returns arra; 
-        imageData = downscale(imageData, options.downscaledSize); // returns array
+        imageData = extract(imageData, options.chars); // returns an array; 
+
+        if(options.debug) {
+            updateDebugCanvas(imageData); 
+        }
+
+        imageData = downscale(imageData, options.downscaledSize); // returns an array
 
         var forBrain = imageData.map(function(imgData) {
             return formatForBrain(imgData) 
@@ -286,6 +291,29 @@
                 outp[i/4] = imgData.data[i] / 255;
             }
             return outp;
+        }
+
+        function updateDebugCanvas(imageData) {
+            var canvas = document.getElementById(options.debug); 
+            var context = canvas.getContext('2d'); 
+
+            var maxW = -1;
+            var maxH = -1 ;
+            for(var i=0; i<imageData.length; i++) {
+                maxW += imageData[i].width;
+        
+                if(imageData[i].height > maxH) {
+                    maxH = imageData[i].height;
+                }
+            }
+            if(maxW > 0 && maxH > 0) {
+                canvas.width = maxW 
+                canvas.height = maxH;
+                for(var i=0; i<imageData.length; i++) {
+                    context.putImageData(imageData[i], 0,0);
+                }
+            }
+
         }
 
 

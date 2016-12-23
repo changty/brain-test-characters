@@ -7,7 +7,6 @@
     var StackBlur = require('stackblur-canvas');
 
     exports.parse = function(image, opts) {
-
         var defaults = {
             downscaledSize: 24,
             debug: false,
@@ -255,7 +254,8 @@
             for (var i = 0, j = imgDatas.length; i < j; ++i) {
                 var s = size,
                 imgData = imgDatas[i],
-                square = new ImageData(s,s);
+                square = ctx.createImageData(s,s);
+                // square = new ImöageData(s, s);
 
                 // loop through every pixel in our small square
                 for (var x = 0; x < s; ++x) {

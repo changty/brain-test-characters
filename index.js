@@ -53,7 +53,7 @@ function test(allowed) {
 				// var answer = parseFileName(file).split("");
 				var answer = parseFileName(file);
 
-				var d = parseImage.parse(data, {debug: true, name: file, downscaledSize: 16, blur: 2, chars: 1});
+				var d = parseImage.parse(data, {debug: true, name: file, downscaledSize: 24, blur: 2, chars: 1});
 				// console.log(d);
 				var tested = guessImageDatas(d);
 				testedCharacters += tested.length; 
@@ -193,9 +193,9 @@ function train(allowed) {
 
 					var net = new brain.NeuralNetwork({hiddenLayers: [128, 128]});
 					  net.train(trainingData, {
-					      errorThresh: 0.000001,  // error threshold to reach 0.0001
+					      errorThresh: 0.0001,  // error threshold to reach 0.0001
 					      iterations: 25000,
-					      learningRate: 0.02,   // maximum training iterations
+					      learningRate: 0.1,   // maximum training iterations
 					      log: true,           // console.log() progress periodically
 					      logPeriod: 10       // number of iterations between logging
 					  });
@@ -236,7 +236,7 @@ function guessImageDatas(imgDatas){
   var outp = [];
   for (var i = 0; i < imgDatas.length; ++i) {
     var guess = net.run(imgDatas[i]);
-    
+
     //find most likely guess
     var max = {txt: "", val: 0};
     for (var k in guess) {

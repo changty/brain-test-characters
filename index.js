@@ -1,7 +1,8 @@
-var Image = Canvas.Image;
+var brain = require('brain');
 var fs = require('fs');
-var ImageParser = require('./imageparser.js');
-console.log("parser", ImageParser);
+var parseImage = require('./imageparser.js');
+var Canvas = require('canvas');
+var Image = Canvas.Image;
 
 function parseFileName(file) {
 	var dash = file.indexOf('_'); 
@@ -49,13 +50,10 @@ function test(allowed) {
 				console.log("Testing with...", file);
 				if(err) throw err;
 
-				var img = new Image(); 
-				img.src = data; 
-
 				// var answer = parseFileName(file).split("");
 				var answer = parseFileName(file);
 
-				var d = new ImageParser(img, {debug: true, name: file, downscaledSize: 16, blur: 2, chars: 1});
+				var d = parseImage.parse(data, {debug: true, name: file, downscaledSize: 16, blur: 2, chars: 1});
 				// console.log(d);
 				var tested = guessImageDatas(d);
 				testedCharacters += tested.length; 
@@ -142,10 +140,7 @@ function train(allowed) {
 				console.log("loading...", file);
 				if(err) throw err;
 
-				var img = new Image(); 
-				img.src = data; 
-
-				var d = new ImageParser(img, {debug: false, name: file, downscaledSize: 24, blur: 2, chars: 1});
+				var d = parseImage.parse(data, {debug: false, name: file, downscaledSize: 24, blur: 2, chars: 1});
 				var answer = parseFileName(file);
 
 				var onlyOneChar = true; 

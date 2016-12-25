@@ -100,7 +100,7 @@ function test(allowed) {
 }
 
 function train(allowed) {
-	const inputFolder = './imgs/';
+	const inputFolder = './imgs/dots/';
 	var fileCount = 0; 
 	var trainingData = [];
 	var testedChars = {}
